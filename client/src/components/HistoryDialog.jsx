@@ -39,23 +39,39 @@ export default function HistoryDialog({ open, setOpen }) {
   const [interactions, setInteractions] = useState([]);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedFeature, setSelectedFeature] = useState("all");
+
 
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const AI_INTERACTIONS_URL = `${BASE_URL}/api/ai/interactions`;
 
-  const fetchInteraction = async () => {
+  const fetchInteraction = async (feature = "all") => {
     try {
-      const res = await fetch(AI_INTERACTIONS_URL, {
-        method: "GET",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) return data.data;
+      if (feature === "all") {
+        const res = await fetch(AI_INTERACTIONS_URL, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.success) return data.data;
+      } else {
+        const res = await fetch(`${AI_INTERACTIONS_URL}/by-feature`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ featureType: feature }),
+        });
+        const data = await res.json();
+        if (data.success) return data.data;
+      }
     } catch (err) {
       console.error("Error fetching interaction:", err);
     }
     return [];
   };
+
 
   const handleView = (item) => {
     setSelectedId(item._id);
@@ -96,9 +112,10 @@ export default function HistoryDialog({ open, setOpen }) {
 
   useEffect(() => {
     if (open) {
-      fetchInteraction().then(setInteractions);
+      fetchInteraction(selectedFeature).then(setInteractions);
     }
-  }, [open]);
+  }, [open, selectedFeature]);
+
 
   return (
     <>
@@ -110,6 +127,25 @@ export default function HistoryDialog({ open, setOpen }) {
               View and manage your previous feature conversations.
             </DialogDescription>
           </DialogHeader>
+          <div className="flex justify-end mb-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="text-sm">
+                  {featureTypes.find((f) => f.key === selectedFeature)?.label}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {featureTypes.map((feature) => (
+                  <DropdownMenuItem
+                    key={feature.key}
+                    onClick={() => setSelectedFeature(feature.key)}
+                  >
+                    {feature.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           <div className="overflow-x-auto max-h-[60vh] mt-2 sm:mt-4">
             <Table className="min-w-[600px] sm:min-w-full">

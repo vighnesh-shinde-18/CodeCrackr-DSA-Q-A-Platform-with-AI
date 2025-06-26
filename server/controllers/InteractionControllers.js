@@ -1,19 +1,34 @@
 const DSAInteraction = require('../models/dsaInteractionModel');
- 
+
 exports.getAllInteractions = async (req, res, next) => {
   try {
     const interactions = await DSAInteraction.find({ userId: req.user.id }).sort({ createdAt: -1 });
-    
+
     res.status(200).json({
       success: true,
       count: interactions.length,
-      data: interactions,
+      data: interactions
     });
   } catch (error) {
     next(error);
   }
 };
 
+exports.getInteractionByFeatureType = async (req, res, next) => {
+  try {
+    const { featureType } = req.body;
+    const interactions = await DSAInteraction.find({ userId: req.user.id, featureType: featureType }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: interactions.length,
+      data: interactions
+    }
+    );
+  }catch (error) {
+    next(error);
+  }
+}
 
 exports.getInteractionById = async (req, res, next) => {
   try {
