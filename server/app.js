@@ -15,6 +15,22 @@ const db = require("./config/db");
 dotenv.config();
 const app = express();
 
+const passport = require('passport');
+require('./config/passport');
+const session = require('express-session');
+
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+
 // Security middleware
 app.use(helmet());
 app.use(morgan("dev"));
@@ -34,25 +50,29 @@ const allowedOrigins = process.env.FRONTEND_URL;
 console.log("Allowed Origins:", allowedOrigins);
 
 
-app.use(cors({
-  origin: function (origin, callback) {
-    console.log("🔍 Incoming origin:", origin);
-    if (!origin) return callback(null, true); // Allow tools like Postman
-    if (allowedOrigins == origin) {
-      console.log("✅ CORS allowed for:", origin);
-      return callback(null, true);
-    } else {
-      console.log("❌ CORS blocked for:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     console.log("🔍 Incoming origin:", origin);
+//     if (!origin) return callback(null, true); // Allow tools like Postman
+//     if (allowedOrigins == origin) {
+//       console.log("✅ CORS allowed for:", origin);
+//       return callback(null, true);
+//     } else {
+//       console.log("❌ CORS blocked for:", origin);
+//       return callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+// }));
 
- 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}))
+
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
- 
+
 
 app.get("/", (req, res) => {
   res.send("Server is working!");

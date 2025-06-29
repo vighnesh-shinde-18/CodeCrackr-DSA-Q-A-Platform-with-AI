@@ -11,11 +11,9 @@ exports.registerUser = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
     
-    
-    if (!username || !email || !password) {
-  
-      return res.status(400).json({ success: false, message: 'All fields are required.' });
-    }
+   if (!password ) {
+  return res.status(400).json({ success: false, message: 'Password required for standard registration.' });
+}
     
     const existingUser = await User.findOne({ email });
 
@@ -55,9 +53,9 @@ exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required.' });
-    }
+   if (!password && !req.body.isOAuth) {
+  return res.status(400).json({ success: false, message: 'Password required for standard registration.' });
+}
 
     const user = await User.findOne({ email }).select('+password');
 
@@ -81,11 +79,19 @@ exports.loginUser = async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({ 
-      success: true,
-      message: 'Logged in successfully',
-      data: { token } 
-    });
+   res.status(200).json({ 
+  success: true,
+  message: 'Logged in successfully',
+  data: {
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email
+    },
+    token
+  }
+});
+
 
   } catch (error) {
     next(error);

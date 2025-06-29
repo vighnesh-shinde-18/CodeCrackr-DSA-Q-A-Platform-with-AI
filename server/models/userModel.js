@@ -19,7 +19,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 6,
-    select: false
+    select: false,
+    required: function () {
+      return !this.googleId;  // Or similar check
+    },
   },
 }, { timestamps: true });
 
