@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useLocation } from "react-router-dom"
 import { Label } from "@/components/ui/label"
+import { Link } from "react-router-dom";
 
 export function NavSecondary({ items, ...props }) {
   const location = useLocation()
@@ -40,10 +41,10 @@ export function NavSecondary({ items, ...props }) {
                   asChild
                   className={isActive ? "bg-primary text-primary-foreground" : ""}
                 >
-                  <a href={item.url}>
+                   <Link to={item.url}> 
                     <item.icon />
                     <span>{item.title}</span>
-                  </a>
+                    </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )

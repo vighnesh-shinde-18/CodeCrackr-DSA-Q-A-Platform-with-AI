@@ -7,6 +7,7 @@ import { Routes, Route, BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 import ProblemsPage from "./pages/ProblemPage";
 import HistoryPage from "./pages/HistoryPage";
+import FeaturePage from "./pages/FeaturePage"; 
 
 function App() {
   return (
@@ -16,8 +17,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/Problems" element={<ProblemsPage/>}/>
-        <Route path="/History" element = {<HistoryPage/>} />
+        <Route path="/problems" element={<ProblemsPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/debug" element={<FeaturePage featureName= "Debug Code" />} />
+        <Route path="/review" element={<FeaturePage featureName= "Review & Refactor Code" />} />
+        <Route path="/generate" element={<FeaturePage featureName= "Generat Code" />} />
+        <Route path="/convert" element={<FeaturePage featureName= "Convert Code" />} />
+        <Route path="/explain" element={<FeaturePage featureName= "Explain Code" />} />
+        <Route path="/testcases" element={<FeaturePage featureName= "Generate Test Cases" />} />
       </Routes>
       <Toaster richColors position="top-right" />
     </BrowserRouter>
@@ -26,9 +33,3 @@ function App() {
 }
 
 export default App;
-        {/* <Route path="/debug" element={<FeaturePage requiredFeature="codeDebugging" outputResponse="" userInput = "// Enter your code here.."/>} />
-         <Route path="/review" element={<FeaturePage requiredFeature="codeReview" outputResponse="" userInput = "// Enter your code here.."/>} />
-         <Route path="/generate" element={<FeaturePage requiredFeature="codeGeneration" outputResponse="" userInput = "// Enter your code here.."/>} />
-         <Route path="/convert" element={<FeaturePage requiredFeature="convertCode" outputResponse="" userInput = "// Enter your code here.."/>} />
-         <Route path="/explain" element={<FeaturePage requiredFeature="explainCode" outputResponse="" userInput = "// Enter your code here.."/>} />
-         <Route path="/testcases" element={<FeaturePage requiredFeature="generateTestCases" outputResponse="" userInput = "// Enter your code here.."/>} /> */}

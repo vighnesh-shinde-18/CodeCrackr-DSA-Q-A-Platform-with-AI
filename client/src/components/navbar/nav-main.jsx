@@ -9,6 +9,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useLocation } from "react-router-dom"
+import { Link } from "react-router-dom";
 
 export function NavMain({
   items}) {
@@ -27,10 +28,10 @@ export function NavMain({
                   tooltip={item.title}
                   className={isActive ? "bg-primary text-primary-foreground" : ""}
                 >
-                  <a href={item.url}>
+                  <Link to={item.url}> 
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
-                  </a>
+                 </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )

@@ -134,6 +134,32 @@
   --sidebar-ring: oklch(0.541 0.281 293.009);
 }
 
+/* Add these to your global CSS */
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 
+               "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground)/0.3);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

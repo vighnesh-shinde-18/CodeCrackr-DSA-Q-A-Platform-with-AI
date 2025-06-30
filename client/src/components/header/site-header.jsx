@@ -10,13 +10,12 @@ const pageTitles = {
   "/dashboard": "Dashboard",
   "/problems": "Problems",
   "/history": "History",
-  "/debug": "Debug Code",
-  "/generate": "Generate Code",
-  "/explain": "Explain Code",
-  "/convert": "Convert Code",
-  "/testcases": "Test Cases",
-  "/profile": "Profile",
-  "/settings": "Settings",
+  "/debug": "AI Feature ",
+  "/generate": "AI Feature ",
+  "/review": "AI Feature ",
+  "/explain": "AI Feature ",
+  "/convert": "AI Feature ",
+  "/testcases": "AI Feature "
 }
 
 export function SiteHeader() {

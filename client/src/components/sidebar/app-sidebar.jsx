@@ -12,6 +12,7 @@ import {
   IconFileText,
   IconLogout,
   IconInnerShadowTop,
+  IconSettingsAutomation
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/navbar/nav-main"
@@ -63,6 +64,10 @@ const aiToolsNav = [
     icon: IconFileCode,
   },
   {
+    title: "Review & Refactor Code",
+    url: "/review",
+    icon: IconSettingsAutomation,
+  },,{
     title: "Explain Code",
     url: "/explain",
     icon: IconBulb,
@@ -114,10 +119,9 @@ export function AppSidebar(props) {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* ✅ Main Navigation */}
+        
         <NavMain title="Navigation" items={mainNav} />
 
-        {/* ✅ AI Tools come directly after main nav */}
         <NavSecondary title="AI Features" items={aiToolsNav} />
 
 
