@@ -123,8 +123,6 @@ export function AppSidebar(props) {
         <NavMain title="Navigation" items={mainNav} />
 
         <NavSecondary title="AI Features" items={aiToolsNav} />
-
-
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
