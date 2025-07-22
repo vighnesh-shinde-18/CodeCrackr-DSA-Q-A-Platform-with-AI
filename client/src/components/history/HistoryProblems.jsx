@@ -1,44 +1,87 @@
-// src/components/history/HistoryProblems.jsx
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell
 } from "@/components/ui/table"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem
+} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2 } from "lucide-react"
 
-const problemsHistory = [
-  { id: 1, title: "Two Sum", difficulty: "Easy", completed: true },
-  { id: 2, title: "Longest Substring", difficulty: "Medium", completed: false },
-  { id: 3, title: "Merge K Sorted Lists", difficulty: "Hard", completed: true },
-]
-
 export function HistoryProblems() {
-  const [filter, setFilter] = useState("all")
+  const [problems, setProblems] = useState([])
+  const [topicFilter, setTopicFilter] = useState("All")
+  const [acceptedFilter, setAcceptedFilter] = useState("All")
 
-  const filtered = filter === "all"
-    ? problemsHistory
-    : problemsHistory.filter(p => p.difficulty === filter)
+  useEffect(() => {
+    const fetchProblems = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/problem/solved", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            topic: topicFilter,
+            accepted: acceptedFilter === "All" ? undefined : acceptedFilter === "Accepted",
+          }),
+        })
+
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Failed to fetch problems")
+
+        setProblems(data)
+      } catch (err) {
+        console.error("Failed to load solved problems:", err)
+      }
+    }
+
+    fetchProblems()
+  }, [topicFilter, acceptedFilter])
+
+  const allTopics = Array.from(new Set(problems.flatMap(p => p.topics)))
+  const filtered = problems.map((p, index) => ({
+    ...p,
+    serialId: index + 1,
+  }))
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Solved / Attempted Problems</h3>
-        <Select defaultValue="all" onValueChange={setFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Filter Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="Easy">Easy</SelectItem>
-            <SelectItem value="Medium">Medium</SelectItem>
-            <SelectItem value="Hard">Hard</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <h3 className="text-lg font-medium">Replied Problems</h3>
+
+        <div className="flex gap-4">
+          <Select defaultValue="All" onValueChange={setTopicFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by Topic" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Topics</SelectItem>
+              {allTopics.map((topic) => (
+                <SelectItem key={topic} value={topic}>
+                  {topic}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select defaultValue="All" onValueChange={setAcceptedFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Status</SelectItem>
+              <SelectItem value="Accepted">Accepted</SelectItem>
+              <SelectItem value="Not Accepted">Not Accepted</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
       <Separator />
 
       <Table>
@@ -46,39 +89,39 @@ export function HistoryProblems() {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Title</TableHead>
-            <TableHead>Difficulty</TableHead>
+            <TableHead>Topics</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filtered.length ? (
-            filtered.map(p => (
+          {filtered.length > 0 ? (
+            filtered.map((p) => (
               <TableRow key={p.id}>
-                <TableCell>{p.id}</TableCell>
+                <TableCell>{p.serialId}</TableCell>
                 <TableCell>{p.title}</TableCell>
                 <TableCell>
-                  <Badge variant={
-                    p.difficulty === "Easy" ? "default" :
-                    p.difficulty === "Medium" ? "secondary" : "destructive"
-                  }>
-                    {p.difficulty}
-                  </Badge>
+                  <div className="flex flex-wrap gap-1">
+                    {p.topics.map((t, i) => (
+                      <Badge key={i} variant="secondary">{t}</Badge>
+                    ))}
+                  </div>
                 </TableCell>
                 <TableCell>
-                  {p.completed ? (
+                  {p.accepted ? (
                     <div className="flex items-center gap-1 text-green-600 font-medium">
-                      <CheckCircle2 className="size-4" />
-                      Solved
+                      <CheckCircle2 className="size-4" /> Accepted
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">Not Solved</span>
+                    <span className="text-muted-foreground">Not Accepted</span>
                   )}
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-8">No problems found.</TableCell>
+              <TableCell colSpan={4} className="text-center py-8">
+                No problems found.
+              </TableCell>
             </TableRow>
           )}
         </TableBody>

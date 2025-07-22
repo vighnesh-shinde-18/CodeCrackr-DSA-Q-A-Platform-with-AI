@@ -24,7 +24,7 @@ const CodeEditor = ({ onRun }) => {
     { value: 'sql', label: 'SQL' },
     { value: 'swift', label: 'Swift' },
     { value: 'typescript', label: 'Typescript' },
-    { value: 'c#', label: 'C#' }
+    { value: 'csharp', label: 'C#' },
   ];
 
   useEffect(() => {
@@ -33,9 +33,10 @@ const CodeEditor = ({ onRun }) => {
     script.onload = () => {
       window.require.config({
         paths: {
-          vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'
-        }
+          vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs',
+        },
       });
+
       window.require(['vs/editor/editor.main'], () => {
         initializeEditor();
       });
@@ -54,7 +55,7 @@ const CodeEditor = ({ onRun }) => {
       const editor = window.monaco.editor.create(monacoRef.current, {
         value: code,
         language,
-        theme: 'vs-light',
+        theme: 'vs-dark', // ✅ Use a dark theme with syntax colors
         fontSize,
         automaticLayout: true,
         minimap: { enabled: false },
@@ -95,7 +96,7 @@ const CodeEditor = ({ onRun }) => {
   const handleReset = () => {
     setCode('// Write your solution here...');
     if (editorRef.current) {
-      editorRef.current.setValue('// Write your solution here...');
+      editorRef.current.setValue('// Write your fycking solution here...');
     }
   };
 
@@ -114,7 +115,7 @@ const CodeEditor = ({ onRun }) => {
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="border text-sm column-wrapper rounded-md px-3 py-1 focus:outline-none bg-white text-black"
+            className="border text-sm rounded-md px-3 py-1 focus:outline-none bg-white text-black"
           >
             {languages.map((lang) => (
               <option key={lang.value} value={lang.value}>
@@ -129,10 +130,11 @@ const CodeEditor = ({ onRun }) => {
             onChange={(e) => setFontSize(Number(e.target.value))}
             className="border text-sm rounded-md px-3 py-1 focus:outline-none bg-white text-black"
           >
-            <option value={12}>12px</option>
-            <option value={14}>14px</option>
-            <option value={16}>16px</option>
-            <option value={18}>18px</option>
+            {[12, 14, 16, 18].map((size) => (
+              <option key={size} value={size}>
+                {size}px
+              </option>
+            ))}
           </select>
         </div>
 

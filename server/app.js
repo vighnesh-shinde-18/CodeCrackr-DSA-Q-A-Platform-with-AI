@@ -10,6 +10,9 @@ const authRoutes = require("./routes/authRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const userRoutes = require("./routes/userRoutes");
 const interactionRoutes = require("./routes/interactionRoutes");
+const problemRoutes = require("./routes/problemRoutes");
+const solutionRoutes = require("./routes/solutionRoutes");
+
 const db = require("./config/db");
 
 dotenv.config();
@@ -18,6 +21,7 @@ const app = express();
 const passport = require('passport');
 require('./config/passport');
 const session = require('express-session');
+const authMiddleware = require("./middleware/authMiddleware");
 
 app.use(session({
   secret: process.env.JWT_SECRET,
@@ -82,7 +86,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/ai/interactions", interactionRoutes);
-
+app.use("/api/problems",authMiddleware,problemRoutes);
+app.use("/api/solutions",authMiddleware,solutionRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

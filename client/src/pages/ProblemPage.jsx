@@ -1,10 +1,9 @@
+// app/problems/page.tsx
+
 import React from "react"
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { SiteHeader } from "@/components/header/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ProblemTable } from "@/components/problem/problem-table"
 
 export default function ProblemsPage() {

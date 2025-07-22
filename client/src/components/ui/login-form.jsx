@@ -42,7 +42,8 @@ export default function LoginForm({ className, onSubmit, loading = false, ...pro
           </div>
 
           {/* Password Input */}
-          <div className="grid gap-3 relative">
+          {/* Password Input */}
+          <div className="grid gap-2 relative">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
@@ -54,26 +55,32 @@ export default function LoginForm({ className, onSubmit, loading = false, ...pro
               className="pr-10"
             />
             <div
-              className="absolute right-3 top-8 cursor-pointer text-muted-foreground"
+              className="absolute right-3 top-7.5 cursor-pointer text-muted-foreground"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </div>
-          </div>
 
+            <span
+              className="text-sm mt-1 text-right text-blue-600 underline cursor-pointer hover:text-blue-800"
+              onClick={() => navigate("/forgot-password")}
+            >
+              Forgot Password?
+            </span>
+          </div>
           <Button type="submit" className="w-full gap-2" disabled={loading}>
             <LogIn className="w-4 h-4" />
             {loading ? "Signing in..." : "Sign In"}
           </Button>
 
-          <div className="relative text-center text-sm">
+          {/* <div className="relative text-center text-sm">
             <div className="absolute inset-0 top-1/2 border-t border-border z-0"></div>
             <span className="bg-background relative z-10 px-2 text-muted-foreground">
               Or
             </span>
-          </div>
+          </div> */}
 
-          <div className="flex items-center-safe">
+          {/* <div className="flex items-center-safe">
             <Button onClick={() => window.location.href = "http://localhost:5000/api/auth/google"}
               variant="outline" type="button" className="w-full">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4 mr-2">
@@ -84,17 +91,17 @@ export default function LoginForm({ className, onSubmit, loading = false, ...pro
               </svg>
               Continue with Google
             </Button>
-          </div>
+          </div> */}
         </div>
       </form>
 
       <div className="text-muted-foreground text-center text-xs mt-6 *:[a]:underline *:[a]:underline-offset-4"> <p className="text-sm text-muted-foreground text-center">
         Don&apos;t have an account?{" "}
         <span
-          className="underline cursor-pointer hover:text-primary"
+          className="text-primary underline cursor-pointe"
           onClick={() => navigate("/register")}
         >
-          Register
+          Register Now
         </span>
       </p>
       </div>

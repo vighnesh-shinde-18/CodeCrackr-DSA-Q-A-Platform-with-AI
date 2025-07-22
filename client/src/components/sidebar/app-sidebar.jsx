@@ -1,3 +1,4 @@
+// ✅ Updated Sidebar to include "Upload Problem"
 import * as React from "react"
 import {
   IconDashboard,
@@ -12,7 +13,8 @@ import {
   IconFileText,
   IconLogout,
   IconInnerShadowTop,
-  IconSettingsAutomation
+  IconSettingsAutomation,
+  IconUpload,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/navbar/nav-main"
@@ -46,6 +48,11 @@ const mainNav = [
     icon: IconListCheck,
   },
   {
+    title: "Problem Manager",
+    url: "/problem-manager",
+    icon: IconUpload,
+  },
+  {
     title: "History",
     url: "/history",
     icon: IconHistory,
@@ -67,7 +74,8 @@ const aiToolsNav = [
     title: "Review & Refactor Code",
     url: "/review",
     icon: IconSettingsAutomation,
-  },,{
+  },
+  {
     title: "Explain Code",
     url: "/explain",
     icon: IconBulb,
@@ -111,7 +119,7 @@ export function AppSidebar(props) {
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <a href="/dashboard">
                 <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">CodeKracker</span>
+                <span className="text-base font-semibold">CodeCracker</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -119,11 +127,10 @@ export function AppSidebar(props) {
       </SidebarHeader>
 
       <SidebarContent>
-        
         <NavMain title="Navigation" items={mainNav} />
-
         <NavSecondary title="AI Features" items={aiToolsNav} />
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser user={userData} />
       </SidebarFooter>

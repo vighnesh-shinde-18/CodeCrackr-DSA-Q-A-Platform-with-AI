@@ -1,26 +1,63 @@
-// src/components/history/HistoryAiFeatures.jsx
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell
 } from "@/components/ui/table"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import {
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem
+} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 
-const aiFeatureHistory = [
-  { id: 1, feature: "Debug Code", prompt: "Fix foo()", date: "2024-06-10" },
-  { id: 2, feature: "Generate Code", prompt: "Binary search", date: "2024-06-11" },
-  { id: 3, feature: "Explain Code", prompt: "Merge sort", date: "2024-06-12" },
-]
-
 export function HistoryAiFeatures() {
+  const [history, setHistory] = useState([])
   const [filter, setFilter] = useState("all")
 
+  useEffect(() => {
+    const fetchInteractions = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/ai/interactions", {
+          method: "GET",
+          credentials: "include",
+        })
+
+        const result = await res.json()
+        if (!res.ok) throw new Error(result.error || "Failed to fetch AI history")
+
+        const formatted = result.data.map((item, idx) => ({
+          id: idx + 1,
+          feature: convertFeature(item.featureType),
+          prompt: item.userInput,
+          date: new Date(item.createdAt).toLocaleDateString(),
+        }))
+
+        setHistory(formatted)
+      } catch (err) {
+        console.error("Failed to fetch AI interactions:", err)
+      }
+    }
+
+    fetchInteractions()
+  }, [])
+
+  const convertFeature = (key) => {
+    const map = {
+      codeDebugging: "Debug Code",
+      codeReview: "Review Code",
+      codeGeneration: "Generate Code",
+      explainCode: "Explain Code",
+      convertCode: "Convert Code",
+      generateTestCases: "Generate Test Cases",
+    }
+    return map[key] || key
+  }
+
   const filtered = filter === "all"
-    ? aiFeatureHistory
-    : aiFeatureHistory.filter(f => f.feature === filter)
+    ? history
+    : history.filter(f => f.feature === filter)
+
+  const uniqueFeatures = Array.from(new Set(history.map(f => f.feature)))
 
   return (
     <div className="space-y-4">
@@ -32,9 +69,11 @@ export function HistoryAiFeatures() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
-            <SelectItem value="Debug Code">Debug Code</SelectItem>
-            <SelectItem value="Generate Code">Generate Code</SelectItem>
-            <SelectItem value="Explain Code">Explain Code</SelectItem>
+            {uniqueFeatures.map((f) => (
+              <SelectItem key={f} value={f}>
+                {f}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -61,7 +100,9 @@ export function HistoryAiFeatures() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-8">No AI feature usage found.</TableCell>
+              <TableCell colSpan={4} className="text-center py-8">
+                No AI feature usage found.
+              </TableCell>
             </TableRow>
           )}
         </TableBody>

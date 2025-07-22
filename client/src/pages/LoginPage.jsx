@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner"; 
 import LoginForm from "../components/ui/login-form";
-import hero from "./HeroPage"
+
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,9 @@ const LoginPage = () => {
       if (response.status === 200) {
         toast.success("Login successful! Redirecting...");
         localStorage.setItem("isLoggedIn", "true");
-        navigate('/');
+       setTimeout(()=>{
+         navigate('/dashboard');
+       },3000)
       } else if (response.status === 404) {
         toast.error("User not found.");
       } else if (response.status === 401) {
