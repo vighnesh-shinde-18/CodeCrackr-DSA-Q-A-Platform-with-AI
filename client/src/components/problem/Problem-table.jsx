@@ -25,8 +25,8 @@ import { CheckCircle2 } from "lucide-react"
 
 const columns = [
   {
-    accessorKey: "  ",
-    header: "  ",
+    id: "index",
+    header: "ID",
     cell: ({ row }) => <div className="font-medium">{row.index + 1}</div>,
   },
   {
@@ -84,12 +84,32 @@ export function ProblemTable() {
   const [acceptedFilter, setAcceptedFilter] = useState("All")
   const [repliedFilter, setRepliedFilter] = useState("All")
   const [problems, setProblems] = useState([])
+  const [originalProblems, setOriginalProblems] = useState([])
 
   const navigate = useNavigate()
 
-  // 🔹 Fetch Problems from Backend
+  // 🔹 Fetch all problems once for topic dropdown
   useEffect(() => {
-    const fetchProblems = async () => {
+    const fetchAllProblems = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/problems`, {
+          method: "GET",
+          credentials: "include",
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Failed to fetch")
+        setOriginalProblems(data)
+      } catch (err) {
+        console.error("Fetch error (all):", err)
+      }
+    }
+
+    fetchAllProblems()
+  }, [])
+
+  // 🔹 Fetch filtered problems based on filters
+  useEffect(() => {
+    const fetchFilteredProblems = async () => {
       try {
         const queryParams = new URLSearchParams()
         if (selectedTopic !== "All") queryParams.append("topic", selectedTopic)
@@ -103,21 +123,21 @@ export function ProblemTable() {
 
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || "Failed to fetch")
-
         setProblems(data)
       } catch (err) {
-        console.error("Fetch error:", err)
+        console.error("Fetch error (filtered):", err)
       }
     }
 
-    fetchProblems()
+    fetchFilteredProblems()
   }, [selectedTopic, acceptedFilter, repliedFilter])
 
+  // 🔹 Topic dropdown (from unfiltered data)
   const topicOptions = useMemo(() => {
     const allTopics = new Set()
-    problems.forEach((p) => p.topics?.forEach((t) => allTopics.add(t)))
+    originalProblems.forEach((p) => p.topics?.forEach((t) => allTopics.add(t)))
     return ["All", ...Array.from(allTopics)]
-  }, [problems])
+  }, [originalProblems])
 
   const filteredProblems = useMemo(() => {
     if (!filter) return problems

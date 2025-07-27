@@ -38,33 +38,36 @@ exports.processAIRequest = async (req, res, next) => {
     finalPrompt += `\n${userInput}`;
 
     const aiRawText = await generateContentFromPrompt(finalPrompt);
-   let aiOutput = null;
 
-if (aiRawText) {
-  try {
-    // In case the JSON is in a code block (e.g., surrounded by ```json ... ```)
-    const match = aiRawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
 
-    const jsonText = match ? match[1] : aiRawText;
-    console.log("✅ json AI output:", jsonText);
+    let aiOutput = null;
 
-    aiOutput = JSON.parse(jsonText);
-    console.log("✅ Parsed AI output:", aiOutput);
-  } catch (err) {
-    console.error("❌ Failed to parse AI JSON:", err);
-    console.log("Raw text for debugging:", aiRawText);
-  }
-} else {
-  console.warn("⚠️ No AI text found.");
-}
+    if (aiRawText) {
+      try {
+        // In case the JSON is in a code block (e.g., surrounded by ```json ... ```)
+        const match = aiRawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+
+        const jsonText = match ? match[1] : aiRawText;
+
+        aiOutput = JSON.parse(jsonText);
+
+      } catch (err) {
+        console.error("❌ Failed to parse AI JSON:", err);
+        console.log("Raw text for debugging:", aiRawText);
+      }
+    } else {
+      console.warn("⚠️ No AI text found.");
+    }
 
     const newInteraction = new DSAInteraction({
       userId: req.user.id,
       featureType,
       userInput,
       aiOutput,
-
+      title: aiOutput.title   // or any meaningful default
     });
+    await newInteraction.save();
+
     await newInteraction.save();
 
 
@@ -73,6 +76,7 @@ if (aiRawText) {
       success: true,
       message: 'AI response generated successfully',
       data: aiOutput,
+      title: aiOutput.title
     });
 
   } catch (error) {
@@ -80,3 +84,5 @@ if (aiRawText) {
     return next(error);
   }
 };
+
+

@@ -1,32 +1,21 @@
-// src/components/ai-response/AiResponseViewer.jsx
+// src/components/aiResponse/AiResponseViewer.jsx
 import React from "react";
 
-const Section = ({ title, children }) => (
-  <div className="mb-4">
-    <h3 className="font-semibold text-lg text-gray-800">{title}</h3>
-    <div className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{children}</div>
-  </div>
-);
+// Import all specific viewer components
+import CodeDebugViewer from "./CodeDebugViewer";
+import CodeGenerationViewer from "./CodeGenerationViewer";
+import CodeReviewViewer from "./CodeReviewViewer";
+import ConvertCodeViewer from "./ConvertCodeViewer";
+import ExplainCodeViewer from "./ExplainCodeViewer";
+import TestCasesViewer from "./TestCasesViewer";
 
 export default function AiResponseViewer({ response, featureType }) {
   if (!response || Object.keys(response).length === 0) return null;
 
+  let parsedResponse;
+
   try {
-    const parsed = typeof response === "string" ? JSON.parse(response) : response;
-
-    return (
-      <div className="m-6  border border-gray-300 rounded-lg bg-white shadow-sm p-6 space-y-4">
-        <h2 className="text-xl font-bold text-gray-900">AI Response</h2>
-
-        {Object.entries(parsed).map(([key, value]) => (
-          <Section key={key} title={key.replace(/([A-Z])/g, " $1")}>
-            {Array.isArray(value)
-              ? value.map((item, idx) => <div key={idx}>• {item}</div>)
-              : <pre className="bg-gray-100 mx-3 p-2 rounded-md overflow-x-auto">{value}</pre>}
-          </Section>
-        ))}
-      </div>
-    );
+    parsedResponse = typeof response === "string" ? JSON.parse(response) : response;
   } catch (err) {
     return (
       <div className="mt-4 p-3 rounded bg-red-100 text-red-600 text-sm">
@@ -34,4 +23,34 @@ export default function AiResponseViewer({ response, featureType }) {
       </div>
     );
   }
+ 
+  const renderViewer = () => {
+    switch (featureType) {
+      case "debug":
+        return <CodeDebugViewer response={parsedResponse} />;
+      case "generate":
+        return <CodeGenerationViewer response={parsedResponse} />;
+      case "review":
+        return <CodeReviewViewer response={parsedResponse} />;
+      case "convert":
+        return <ConvertCodeViewer response={parsedResponse} />;
+      case "explain":
+        return <ExplainCodeViewer response={parsedResponse} />;
+      case "testcases":
+        return <TestCasesViewer response={parsedResponse} />;
+      default:
+        return (
+          <div className="mt-4 p-3 rounded bg-yellow-100 text-yellow-700 text-sm">
+            Unknown feature type: {featureType}
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="m-6 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 shadow-sm p-6 space-y-4">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white">AI Response</h2>
+      {renderViewer()}
+    </div>
+  );
 }

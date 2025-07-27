@@ -18,8 +18,7 @@ const db = require("./config/db");
 dotenv.config();
 const app = express();
 
-const passport = require('passport');
-require('./config/passport');
+
 const session = require('express-session');
 const authMiddleware = require("./middleware/authMiddleware");
 
@@ -29,9 +28,7 @@ app.use(session({
   saveUninitialized: true,
   cookie: { secure: false }
 }));
-
-app.use(passport.initialize());
-app.use(passport.session());
+ 
 
 
 

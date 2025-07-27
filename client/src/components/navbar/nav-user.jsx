@@ -1,5 +1,4 @@
 import {
-  IconUserCircle,
   IconLogout,
 } from "@tabler/icons-react";
 
@@ -11,10 +10,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -30,8 +26,9 @@ export function NavUser({ user }) {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
 
-  const initials = user.name
-    ? user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+  // ✅ Safely extract initials from username
+  const initials = user.username
+    ? user.username.slice(0, 2).toUpperCase()
     : "CK";
 
   const handleLogout = async () => {
@@ -41,11 +38,10 @@ export function NavUser({ user }) {
 
       const res = await fetch(LOGOUT_URL, {
         method: "POST",
-        credentials: "include", // needed for cookie-based sessions
+        credentials: "include",
       });
 
       if (res.ok) {
-        // Redirect to login
         navigate("/login");
       } else {
         console.error("Logout failed");
@@ -65,12 +61,12 @@ export function NavUser({ user }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src={user.avatar} alt={user.username || "User"} />
                 <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="text-muted-foreground truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{user.username || "Unknown"}</span>
+                <span className="text-muted-foreground truncate text-xs">{user.email || ""}</span>
               </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>

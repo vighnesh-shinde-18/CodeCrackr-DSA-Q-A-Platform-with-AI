@@ -37,10 +37,7 @@ export default function Dashboard() {
         const questions = await questionCountRes.json()
         const solutions = await solutionCountRes.json()
 
-        
-        console.log(questions,solutions)
-
-        setUser({email:userData.email, username:userData.username});
+        setUser({...user ,email:userData.data.email, username:userData.data.username});
 
        setCounts({
   users: users?.data ?? -1,
@@ -69,9 +66,10 @@ export default function Dashboard() {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-4 lg:px-6">
-                <h1 className="text-2xl font-bold tracking-tight">
-                  Welcome, {user?.username || "Loading..."} 👋
-                </h1>
+               <h1 className="text-2xl font-bold tracking-tight">
+  Welcome, {user?.username ? user.username.charAt(0).toUpperCase() + user.username.slice(1) : "Loading..."} 👋
+</h1>
+              
                 <p className="text-muted-foreground text-sm mt-1">
                   Here's your progress snapshot for the week.
                 </p>

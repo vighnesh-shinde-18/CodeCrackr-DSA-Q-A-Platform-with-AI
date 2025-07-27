@@ -1,6 +1,7 @@
 // src/components/code-editor/CodeEditor.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Copy, Check, RotateCcw, Play } from 'lucide-react';
+import { toast } from 'sonner';
 
 const CodeEditor = ({ onRun }) => {
   const [language, setLanguage] = useState('javascript');
@@ -10,7 +11,7 @@ const CodeEditor = ({ onRun }) => {
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
 
-  const languages = [
+  const languages = [ {value:'cpp', label:"C++"},  
     { value: 'python', label: 'Python' },
     { value: 'java', label: 'Java' },
     { value: 'c', label: 'C' },
@@ -24,8 +25,7 @@ const CodeEditor = ({ onRun }) => {
     { value: 'sql', label: 'SQL' },
     { value: 'swift', label: 'Swift' },
     { value: 'typescript', label: 'Typescript' },
-    { value: 'csharp', label: 'C#' },
-  ];
+    { value: 'csharp', label: 'C#' }];
 
   useEffect(() => {
     const script = document.createElement('script');
@@ -52,10 +52,14 @@ const CodeEditor = ({ onRun }) => {
 
   const initializeEditor = () => {
     if (monacoRef.current && window.monaco) {
+      const theme = document.documentElement.classList.contains('dark')
+        ? 'vs-dark'
+        : 'vs';
+
       const editor = window.monaco.editor.create(monacoRef.current, {
         value: code,
         language,
-        theme: 'vs-dark', // ✅ Use a dark theme with syntax colors
+        theme,
         fontSize,
         automaticLayout: true,
         minimap: { enabled: false },
@@ -83,20 +87,29 @@ const CodeEditor = ({ onRun }) => {
     }
   }, [fontSize]);
 
+  useEffect(() => {
+    if (editorRef.current && window.monaco) {
+      const theme = document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs';
+      window.monaco.editor.setTheme(theme);
+    }
+  }, [document.documentElement.classList.contains('dark')]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      toast.success("Copied to clipboard!")
     } catch (err) {
       console.error('Failed to copy code');
     }
   };
 
   const handleReset = () => {
-    setCode('// Write your solution here...');
+    const resetText = '// Write your solution here...';
+    setCode(resetText);
     if (editorRef.current) {
-      editorRef.current.setValue('// Write your fycking solution here...');
+      editorRef.current.setValue(resetText);
     }
   };
 
@@ -107,15 +120,14 @@ const CodeEditor = ({ onRun }) => {
   };
 
   return (
-    <div className="bg-white border rounded-md shadow-sm p-4 space-y-4">
+    <div className="border rounded-md shadow-sm p-4 space-y-4 bg-white dark:bg-zinc-900 transition-colors">
       {/* Controls */}
       <div className="flex flex-wrap justify-between gap-2 items-center">
         <div className="flex gap-2">
-          {/* Language Selector */}
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="border text-sm rounded-md px-3 py-1 focus:outline-none bg-white text-black"
+            className="border text-sm rounded-md px-3 py-1 focus:outline-none bg-white text-black dark:bg-zinc-800 dark:text-white"
           >
             {languages.map((lang) => (
               <option key={lang.value} value={lang.value}>
@@ -124,11 +136,10 @@ const CodeEditor = ({ onRun }) => {
             ))}
           </select>
 
-          {/* Font Size Selector */}
           <select
             value={fontSize}
             onChange={(e) => setFontSize(Number(e.target.value))}
-            className="border text-sm rounded-md px-3 py-1 focus:outline-none bg-white text-black"
+            className="border text-sm rounded-md px-3 py-1 focus:outline-none bg-white text-black dark:bg-zinc-800 dark:text-white"
           >
             {[12, 14, 16, 18].map((size) => (
               <option key={size} value={size}>
@@ -138,39 +149,43 @@ const CodeEditor = ({ onRun }) => {
           </select>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex gap-2">
-          <button
-            onClick={handleCopy}
-            className="px-3 py-1 rounded-md text-sm bg-gray-200 hover:bg-gray-300 transition"
-          >
-            {copied ? (
-              <span className="flex items-center gap-1">
-                <Check size={14} /> Copied
-              </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <Copy size={14} /> Copy
-              </span>
-            )}
-          </button>
+  <button
+    onClick={handleCopy}
+    className="px-3 py-1 rounded-md text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-black dark:text-white transition"
+  >
+    {copied ? (
+      <span className="flex items-center gap-1">
+        <Check size={14} /> Copied
+      </span>
+    ) : (
+      <span className="flex items-center gap-1">
+        <Copy size={14} /> Copy
+      </span>
+    )}
+  </button>
 
-          <button
-            onClick={handleReset}
-            className="px-3 py-1 rounded-md text-sm bg-yellow-100 hover:bg-yellow-200 transition flex items-center gap-1"
-          >
-            <RotateCcw size={14} />
-            Reset
-          </button>
+  <button
+    onClick={handleReset}
+    className="px-3 py-1 rounded-md text-sm bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-black dark:text-white transition"
+  >
+    <span className="flex items-center gap-1">
+      <RotateCcw size={14} />
+      Reset
+    </span>
+  </button>
 
-          <button
-            onClick={handleRun}
-            className="px-4 py-1 rounded-md text-sm bg-green-600 hover:bg-green-700 text-white transition flex items-center gap-1"
-          >
-            <Play size={14} />
-            Run Code
-          </button>
-        </div>
+  <button
+    onClick={handleRun}
+    className="px-4 py-1 rounded-md text-sm bg-green-600 hover:bg-green-700 text-white transition"
+  >
+    <span className="flex items-center gap-1">
+      <Play size={14} />
+      Run Code
+    </span>
+  </button>
+</div>
+
       </div>
 
       {/* Editor */}

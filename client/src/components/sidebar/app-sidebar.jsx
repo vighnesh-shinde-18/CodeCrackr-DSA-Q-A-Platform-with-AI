@@ -1,4 +1,5 @@
-// ✅ Updated Sidebar to include "Upload Problem"
+"use client"
+
 import * as React from "react"
 import {
   IconDashboard,
@@ -29,12 +30,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-
-const userData = {
-  name: "Vighnesh",
-  email: "vighnesh@example.com",
-  avatar: "/avatars/shadcn.jpg",
-}
+import { useState, useEffect } from "react"
 
 const mainNav = [
   {
@@ -50,7 +46,7 @@ const mainNav = [
   {
     title: "Problem Manager",
     url: "/problem-manager",
-    icon: IconUpload,
+    icon: IconUpload, // ✅ New Upload icon
   },
   {
     title: "History",
@@ -111,6 +107,35 @@ const secondaryNav = [
 ]
 
 export function AppSidebar(props) {
+  const [userData, setUserData] = useState({
+    username: "",
+    email: "",
+    avatar: "/avatars/shadcn.jpg",
+  })
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/user/profile", {
+          method: "GET",
+          credentials: "include",
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || "Profile fetch failed")
+
+        setUserData((prev) => ({
+          ...prev,
+          username: data.username,
+          email: data.email,
+        }))
+      } catch (err) {
+        console.error("Error fetching user profile:", err)
+      }
+    }
+
+    fetchData()
+  }, [])
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>

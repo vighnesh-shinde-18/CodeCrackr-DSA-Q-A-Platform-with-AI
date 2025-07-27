@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
 import ProblemDetails from "@/components/problem/ProblemDetails";
 import SolutionReplies from "@/components/solution/SolutionReplies";
 import SolutionInput from "@/components/solution/SolutionInput";
@@ -7,66 +9,75 @@ import { SiteHeader } from "@/components/header/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function ProblemSolvingPage() {
-  const currentUserId = "user123"; // Logged in user ID
-
-  const problem = {
-    id: "1",
-    title: "Two Sum",
-    description: "Given an array of integers, return indices of the two numbers such that they add up to a specific target.",
-    topics: ["Array", "HashMap"],
-    username: "user123", // ✅ This is the problem creator
-    testCases: [
-      { input: "[2, 7, 11, 15], target = 9", output: "[0, 1]" },
-      { input: "[3, 2, 4], target = 6", output: "[1, 2]" }
-    ],
-    replies: [
-      {
-        userId: "user999",
-        username: "JohnDoe",
-        explanation: "Use a hash map to store values and their indices while iterating.",
-        code: `function twoSum(nums, target) {
-  const map = {};
-  for (let i = 0; i < nums.length; i++) {
-    let diff = target - nums[i];
-    if (map[diff] !== undefined) {
-      return [map[diff], i];
-    }
-    map[nums[i]] = i;
-  }
-}`,
-        accepted: true
-      },
-      {
-        userId: "user456",
-        username: "JaneSmith",
-        explanation: "Try brute force first then optimize.",
-        code: `function twoSum(nums, target) {
-  for (let i = 0; i < nums.length; i++) {
-    for (let j = i + 1; j < nums.length; j++) {
-      if (nums[i] + nums[j] === target) return [i, j];
-    }
-  }
-}`,
-        accepted: false
-      }
-    ]
-  };
+  const { id } = useParams(); // Get problem ID from route
+  const [problem, setProblem] = useState(null);
+  const [allReplies, setAllReplies] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [selectedReply, setSelectedReply] = useState(null);
   const [showEditor, setShowEditor] = useState(true);
-  const [allReplies, setAllReplies] = useState(problem.replies);
   const [filterStatus, setFilterStatus] = useState("all");
 
-  const handleViewReply = (reply) => {
-    setSelectedReply(reply);
-    setShowEditor(false);
+  // 🔹 Fetch logged-in user
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/user/profile", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCurrentUserId(data._id); // Make sure _id is returned in backend
+      } else {
+        throw new Error("User not authenticated");
+      }
+    } catch (err) {
+      console.error("Error fetching user:", err);
+      setCurrentUserId(""); // Fallback
+    }
   };
 
-  const handleResetEditor = () => {
-    setSelectedReply(null);
-    setShowEditor(true);
-  };
+  // 🔹 Fetch problem & replies
+  useEffect(() => {
+    const fetchProblemAndReplies = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/problems/${id}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
 
+        if (!res.ok) throw new Error(data.error || "Failed to load problem");
+
+        setProblem(data);
+        fetchReplies(data.id);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchReplies = async (problemId) => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/solutions/${problemId}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load replies");
+        setAllReplies(data);
+      } catch (err) {
+        console.error("Error fetching replies:", err);
+        setAllReplies([]);
+      }
+    };
+
+    fetchCurrentUser();
+    fetchProblemAndReplies();
+  }, [id]);
+
+  // 🔹 Accept Reply Handler
   const handleAcceptReply = (replyIndex) => {
     const updatedReplies = allReplies.map((r, idx) => ({
       ...r,
@@ -77,6 +88,7 @@ export default function ProblemSolvingPage() {
     alert("✅ Marked this solution as Accepted");
   };
 
+  // 🔹 Filtered Replies
   const filteredReplies = allReplies.filter((reply) => {
     if (filterStatus === "all") return true;
     if (filterStatus === "accepted") return reply.accepted;
@@ -84,6 +96,20 @@ export default function ProblemSolvingPage() {
     if (filterStatus === "mine") return reply.userId === currentUserId;
     return true;
   });
+
+  // 🔹 View/Reset Handler
+  const handleViewReply = (reply) => {
+    setSelectedReply(reply);
+    setShowEditor(false);
+  };
+
+  const handleResetEditor = () => {
+    setSelectedReply(null);
+    setShowEditor(true);
+  };
+
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (error) return <div className="p-6 text-red-500">Error: {error}</div>;
 
   return (
     <SidebarProvider
@@ -96,7 +122,7 @@ export default function ProblemSolvingPage() {
         <SiteHeader />
         <div className="flex flex-col gap-6 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left column: Problem details and replies */}
+            {/* 🔹 Left column: Problem details & replies */}
             <div className="space-y-6">
               <ProblemDetails problem={problem} />
 
@@ -118,18 +144,19 @@ export default function ProblemSolvingPage() {
                 <SolutionReplies
                   replies={filteredReplies}
                   onViewReply={handleViewReply}
-                  showAcceptButton={currentUserId === problem.username} 
+                  showAcceptButton={currentUserId === problem.user}
                   onAcceptReply={handleAcceptReply}
                 />
               </div>
             </div>
 
+            {/* 🔹 Right column: Submit/View Solution */}
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">
                   {showEditor
                     ? "Submit Your Solution"
-                    : `${selectedReply.username}'s Solution`}
+                    : `${selectedReply?.username}'s Solution`}
                 </h2>
                 {!showEditor && (
                   <button
@@ -145,7 +172,7 @@ export default function ProblemSolvingPage() {
                 showEditor={showEditor}
                 selectedReply={selectedReply}
                 currentUserId={currentUserId}
-                isUploader={currentUserId === problem.username} 
+                isUploader={currentUserId === problem.user}
                 onAcceptReply={handleAcceptReply}
                 allReplies={allReplies}
               />
