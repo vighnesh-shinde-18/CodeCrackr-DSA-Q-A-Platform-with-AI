@@ -21,17 +21,17 @@ const RegisterPage = () => {
       });
 
       if (res.status === 201) {
-        toast.success("🎉 Registration successful! Redirecting to login...");
+        toast.success(" Registration successful! Redirecting to login...");
         setTimeout(() => {
           navigate("/login");
         }, 2500);
       } else if (res.status === 409) {
-        toast.error("⚠️ User already exists.");
+        toast.error("User already exists.");
       } else {
-        toast.error("❌ Registration failed. Please try again.");
+        toast.error("Registration failed. Please try again.");
       }
     } catch (err) {
-      toast.error("🚫 Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     } finally {
       setLoading(false);
     }

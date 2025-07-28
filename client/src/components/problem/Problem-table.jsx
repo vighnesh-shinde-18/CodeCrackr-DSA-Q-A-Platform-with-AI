@@ -177,7 +177,7 @@ export function ProblemTable() {
         <select
           value={selectedTopic}
           onChange={(e) => setSelectedTopic(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-zinc-800 dark:text-white"
         >
           {topicOptions.map((topic) => (
             <option key={topic} value={topic}>
@@ -189,7 +189,7 @@ export function ProblemTable() {
         <select
           value={acceptedFilter}
           onChange={(e) => setAcceptedFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-zinc-800 dark:text-white"
         >
           <option value="All">All</option>
           <option value="Accepted">Accepted</option>
@@ -199,7 +199,7 @@ export function ProblemTable() {
         <select
           value={repliedFilter}
           onChange={(e) => setRepliedFilter(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-zinc-800 dark:text-white"
         >
           <option value="All">All</option>
           <option value="Replied">Replied</option>
