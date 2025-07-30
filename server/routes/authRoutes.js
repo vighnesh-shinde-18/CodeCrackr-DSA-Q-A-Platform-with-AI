@@ -10,8 +10,8 @@ const {
   validateAndResetPassword,
 } = require("../controllers/authControllers");
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/register", registerUser); 
+router.post("/login", loginUser); 
 router.post("/logout", logoutUser);
 router.post("/send-otp", generateAndSendOtp);
 router.post("/reset-password", validateAndResetPassword);

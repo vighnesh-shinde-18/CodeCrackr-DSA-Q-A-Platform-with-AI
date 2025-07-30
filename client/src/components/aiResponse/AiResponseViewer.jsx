@@ -9,11 +9,18 @@ import ConvertCodeViewer from "./ConvertCodeViewer";
 import ExplainCodeViewer from "./ExplainCodeViewer";
 import TestCasesViewer from "./TestCasesViewer";
 
-export default function AiResponseViewer({ response, featureType }) {
+export default function AiResponseViewer({ response, featureType, isHistory = false }) {
   if (!response || Object.keys(response).length === 0) return null;
 
-  let parsedResponse;
+  if (!featureType) {
+    return (
+      <div className="p-4 rounded bg-red-100 text-red-700">
+        Feature type is missing.
+      </div>
+    );
+  }
 
+  let parsedResponse;
   try {
     parsedResponse = typeof response === "string" ? JSON.parse(response) : response;
   } catch (err) {
@@ -23,7 +30,7 @@ export default function AiResponseViewer({ response, featureType }) {
       </div>
     );
   }
- 
+
   const renderViewer = () => {
     switch (featureType) {
       case "debug":
@@ -47,10 +54,14 @@ export default function AiResponseViewer({ response, featureType }) {
     }
   };
 
-  return (
+  return isHistory ? (
     <div className="m-6 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 shadow-sm p-6 space-y-4">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white">AI Response</h2>
       {renderViewer()}
     </div>
+  ) : (
+   <>
+   {renderViewer()}
+   </> 
   );
 }

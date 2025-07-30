@@ -13,9 +13,11 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { toast } from "sonner"
+import { useNavigate } from "react-router-dom";
 
 export default function ProblemManagerPage() {
   const submittedPlural = (count) => count === 1 ? "" : "s"
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     title: "",
@@ -121,6 +123,12 @@ export default function ProblemManagerPage() {
   const filteredProblems = topicFilter === "all"
     ? myProblems
     : myProblems.filter(p => p.topics.includes(topicFilter))
+
+ const visitProblem = (problemId) => {
+  console.log(problemId)
+    navigate(`/solve-problem/${problemId}`)
+  }
+
 
   return (
     <SidebarProvider
@@ -238,7 +246,8 @@ export default function ProblemManagerPage() {
                   {filteredProblems.map((problem, index) => (
                     <div
                       key={index}
-                      className="border rounded-md p-4 shadow-sm hover:bg-muted/50 transition"
+                      onClick={() => visitProblem(problem.id)}
+                      className="cursor-pointer border rounded-md p-4 shadow-sm hover:bg-muted transition-all hover:scale-[1.01]"
                     >
                       <div className="flex justify-between items-center">
                         <h4 className="font-medium text-lg">

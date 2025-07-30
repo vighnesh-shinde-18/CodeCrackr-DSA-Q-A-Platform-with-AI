@@ -19,7 +19,7 @@ router.get("/problem-count", authMiddleware, getProblemCount);
 router.get("/", authMiddleware, getAllProblems);
 router.get("/:id", authMiddleware, getProblemById);
 router.post("/", authMiddleware, createProblem);
-router.get("/solved", authMiddleware, getUserSolvedProblems);
+router.post("/solved", authMiddleware, getUserSolvedProblems);
 router.post("/uploaded", authMiddleware, getUserUploadedProblems);
 
 module.exports = router;

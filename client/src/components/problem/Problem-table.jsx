@@ -26,7 +26,7 @@ import { CheckCircle2 } from "lucide-react"
 const columns = [
   {
     id: "index",
-    header: "ID",
+    header: "Sr.No.",
     cell: ({ row }) => <div className="font-medium">{row.index + 1}</div>,
   },
   {

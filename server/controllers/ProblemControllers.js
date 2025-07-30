@@ -141,32 +141,37 @@ const getUserSolvedProblems = async (req, res) => {
     const userId = req.user.id;
     const { topic, accepted } = req.body;
 
-    const userSolutions = await Solution.find({ user: userId }).populate("problem").lean();
+    // Get all solutions by the user with populated problem data
+    const userSolutions = await Solution.find({ user: userId })
+      .populate("problem")
+      .lean();
 
     const seen = new Set();
     const result = [];
 
     for (const sol of userSolutions) {
-      const p = sol.problem;
-      const pid = p._id.toString();
+      const problem = sol.problem;
+      if (!problem) continue;
 
-      if (seen.has(pid)) continue;
-      seen.add(pid);
-
-      // ✅ Skip filtering if topic is "All" or not provided
-      if (topic && topic !== "All" && !p.topics.includes(topic)) {
+      const problemId = problem._id.toString();
+ 
+      if (seen.has(problemId)) continue;
+      seen.add(problemId);
+ 
+      if (topic && topic !== "All" && !problem.topics.includes(topic)) {
         continue;
       }
-
-      // ✅ Filter by accepted status
-      if (accepted && String(sol.accepted) !== accepted) {
-        continue;
+ 
+      if (accepted === true && sol.accepted !== true) {
+        continue; 
+      } else if (accepted === false && sol.accepted !== false) {
+        continue; 
       }
-
+ 
       result.push({
-        id: p._id,
-        title: p.title,
-        topics: p.topics,
+        id: problem._id,
+        title: problem.title,
+        topics: problem.topics,
         accepted: sol.accepted,
       });
     }
@@ -177,6 +182,7 @@ const getUserSolvedProblems = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
+
 
 
 // GET: Uploaded problems by user

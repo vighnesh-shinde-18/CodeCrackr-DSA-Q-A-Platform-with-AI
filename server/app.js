@@ -37,12 +37,12 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  message: "Too many requests from this IP, please try again later.",
-});
-app.use("/api", limiter);
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100,
+//   message: "Too many requests from this IP, please try again later.",
+// });
+// app.use("/api", limiter);
 
 
 
@@ -73,7 +73,8 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: "10kb" }));
+// app.use(express.json({ limit: "10kb" }));
+app.use(express.json());
 app.use(cookieParser());
 
 
@@ -82,12 +83,12 @@ app.get("/", (req, res) => {
   res.send("Server is working!");
 });
 
-app.use("api/auth", authRoutes);
-app.use("api/user", userRoutes);
-app.use("api/ai", aiRoutes);
-app.use("api/ai/interactions", interactionRoutes);
-app.use("api/problems",authMiddleware,problemRoutes);
-app.use("api/solutions",authMiddleware,solutionRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/ai/interactions", interactionRoutes);
+app.use("/api/problems",authMiddleware,problemRoutes);
+app.use("/api/solutions",authMiddleware,solutionRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

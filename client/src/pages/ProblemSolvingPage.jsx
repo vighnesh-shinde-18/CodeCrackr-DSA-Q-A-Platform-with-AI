@@ -4,7 +4,6 @@ import { useParams } from "react-router-dom";
 import ProblemDetails from "@/components/problem/ProblemDetails";
 import SolutionReplies from "@/components/solution/SolutionReplies";
 import SolutionInput from "@/components/solution/SolutionInput";
-import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SiteHeader } from "@/components/header/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
@@ -12,7 +11,7 @@ export default function ProblemSolvingPage() {
   const { id } = useParams(); // Get problem ID from route
   const [problem, setProblem] = useState(null);
   const [allReplies, setAllReplies] = useState([]);
-  const [currentUserId, setCurrentUserId] = useState("");
+  const [currentUserId, setCurrentUserId] = useState(777);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,7 +27,7 @@ export default function ProblemSolvingPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setCurrentUserId(data._id); // Make sure _id is returned in backend
+        setCurrentUserId(data.data._id)
       } else {
         throw new Error("User not authenticated");
       }
@@ -39,42 +38,45 @@ export default function ProblemSolvingPage() {
   };
 
   // 🔹 Fetch problem & replies
+  const fetchReplies = async (problemId) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/solutions/${problemId}`, {
+        credentials: "include",
+        method: "GET"
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load replies");
+      setAllReplies(data);
+    } catch (err) {
+      console.error("Error fetching replies:", err);
+      setAllReplies([]);
+    }
+  };
+
+  // ✅ 2. Move fetchProblem to top too, and call fetchReplies inside
+  const fetchProblem = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/problems/${id}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to load problem");
+
+      setProblem(data);
+      fetchReplies(data.id); // Use .id or ._id as per your backend response
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔄 Fetch on mount
   useEffect(() => {
-    const fetchProblemAndReplies = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/problems/${id}`, {
-          credentials: "include",
-        });
-        const data = await res.json();
-
-        if (!res.ok) throw new Error(data.error || "Failed to load problem");
-
-        setProblem(data);
-        fetchReplies(data.id);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchReplies = async (problemId) => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/solutions/${problemId}`, {
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load replies");
-        setAllReplies(data);
-      } catch (err) {
-        console.error("Error fetching replies:", err);
-        setAllReplies([]);
-      }
-    };
-
     fetchCurrentUser();
-    fetchProblemAndReplies();
+    fetchProblem();
   }, [id]);
 
   // 🔹 Accept Reply Handler
@@ -132,7 +134,7 @@ export default function ProblemSolvingPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="border px-2 py-1 rounded text-sm"
+                    className="border px-2 py-1 rounded text-sm dark:bg-zinc-800 dark:text-white"
                   >
                     <option value="all">All</option>
                     <option value="accepted">Accepted</option>
@@ -150,7 +152,6 @@ export default function ProblemSolvingPage() {
               </div>
             </div>
 
-            {/* 🔹 Right column: Submit/View Solution */}
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">
@@ -175,7 +176,9 @@ export default function ProblemSolvingPage() {
                 isUploader={currentUserId === problem.user}
                 onAcceptReply={handleAcceptReply}
                 allReplies={allReplies}
+                fetchReplies={fetchProblem}
               />
+
             </div>
           </div>
         </div>

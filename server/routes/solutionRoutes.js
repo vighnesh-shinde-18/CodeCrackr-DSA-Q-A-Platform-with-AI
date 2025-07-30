@@ -15,10 +15,10 @@ const {
 
 
 router.get("/solution-count",authMiddleware, getSolutionCount);
-router.get("/",authMiddleware, getAllSolutions);
-router.get("/:id", authMiddleware, getSolutionById);
+router.get("/:id",authMiddleware, getAllSolutions);
+router.post("/:id", authMiddleware, getSolutionById);
 router.post("/", authMiddleware, submitSolution);
 router.get("/user-solutions", authMiddleware, getUserSolutions);
-router.patch("/mark-accepted", authMiddleware, markSolutionAsAccepted);
+router.patch("/mark-accepted/:id", authMiddleware, markSolutionAsAccepted);
 
 module.exports =  router;

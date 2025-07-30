@@ -166,7 +166,7 @@ export default function LeaderboardTable() {
                 <TableHead className="font-bold text-gray-800 dark:text-gray-100">
                   User
                 </TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100">
+                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">
                   Questions
                 </TableHead>
                 <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">

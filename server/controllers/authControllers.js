@@ -50,35 +50,46 @@ exports.registerUser = async (req, res, next) => {
 };
 
 exports.loginUser = async (req, res, next) => {
+  
   try {
     const { email, password } = req.body;
-
+    
+    
     if (!password && !req.body.isOAuth) {
+      
       return res.status(400).json({ success: false, message: 'Password required for standard registration.' });
     }
-
+    
+    
     const user = await User.findOne({ email }).select('+password');
-
-
+    
+    
+    
     if (!user) {
+    
       return res.status(404).json({ success: false, message: 'Invalid credentials.' });
     }
-
+  
+    
     const isMatch = await bcrypt.compare(password, user.password);
-
+  
+    
     if (!isMatch) {
+    
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
-
+    
+    
     const token = generateToken(user);
-
+    
+    
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
+     
     res.status(200).json({
       success: true,
       message: 'Logged in successfully',
@@ -91,7 +102,7 @@ exports.loginUser = async (req, res, next) => {
         token
       }
     });
-
+     
 
   } catch (error) {
     next(error);
@@ -150,8 +161,7 @@ exports.validateAndResetPassword = async (req, res) => {
     if (!user || user.resetPasswordOTP !== otp) {
       return res.status(400).json({ message: "Invalid email or OTP" });
     }
-
-    const bcrypt = require("bcrypt");
+ 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     user.password = hashedPassword;

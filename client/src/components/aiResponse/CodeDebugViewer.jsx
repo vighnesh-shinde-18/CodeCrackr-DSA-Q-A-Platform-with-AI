@@ -7,7 +7,6 @@ export default function CodeDebugViewer({ response }) {
   return (
     <div className="m-6 border rounded bg-white dark:bg-black dark:border-gray-700 p-6 shadow space-y-4">
       <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
-
       <div>
         <h3 className="font-semibold text-gray-800 dark:text-gray-200">Corrected Code</h3>
         <CodeOutputBlock code={correctedCode} language="javascript" />

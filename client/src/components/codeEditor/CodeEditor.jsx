@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 const CodeEditor = ({ onRun }) => {
   const [language, setLanguage] = useState('javascript');
   const [fontSize, setFontSize] = useState(14);
-  const [code, setCode] = useState('// Write your solution here...');
+  const [code, setCode] = useState('');
   const [copied, setCopied] = useState(false);
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -106,7 +106,7 @@ const CodeEditor = ({ onRun }) => {
   };
 
   const handleReset = () => {
-    const resetText = '// Write your solution here...';
+    const resetText = '';
     setCode(resetText);
     if (editorRef.current) {
       editorRef.current.setValue(resetText);

@@ -19,7 +19,7 @@ export function HistoryProblems() {
   useEffect(() => {
     const fetchProblems = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/problem/solved", {
+        const res = await fetch("http://localhost:5000/api/problems/solved", {
           method: "POST",
           credentials: "include",
           headers: {
@@ -27,7 +27,12 @@ export function HistoryProblems() {
           },
           body: JSON.stringify({
             topic: topicFilter,
-            accepted: acceptedFilter === "All" ? undefined : acceptedFilter === "Accepted",
+            accepted:
+              acceptedFilter === "All"
+                ? undefined
+                : acceptedFilter === "Accepted"
+                  ? true
+                  : false,
           }),
         })
 
@@ -42,6 +47,7 @@ export function HistoryProblems() {
 
     fetchProblems()
   }, [topicFilter, acceptedFilter])
+
 
   const allTopics = Array.from(new Set(problems.flatMap(p => p.topics)))
   const filtered = problems.map((p, index) => ({
@@ -87,44 +93,51 @@ export function HistoryProblems() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
+            <TableHead>Sr.No.</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Topics</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {filtered.length > 0 ? (
-            filtered.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>{p.serialId}</TableCell>
-                <TableCell>{p.title}</TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {p.topics.map((t, i) => (
-                      <Badge key={i} variant="secondary">{t}</Badge>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {p.accepted ? (
-                    <div className="flex items-center gap-1 text-green-600 font-medium">
-                      <CheckCircle2 className="size-4" /> Accepted
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">Not Accepted</span>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))
+       <TableBody>
+  {filtered.length > 0 ? (
+    filtered.map((p) => (
+      <TableRow
+        key={p.id}
+        onClick={() =>
+          window.location.href = `http://localhost:5173/solve-problem/${p.id}`
+        }
+        className="cursor-pointer hover:bg-muted transition-colors"
+      >
+        <TableCell>{p.serialId}</TableCell>
+        <TableCell>{p.title}</TableCell>
+        <TableCell>
+          <div className="flex flex-wrap gap-1">
+            {p.topics.map((t, i) => (
+              <Badge key={i} variant="secondary">{t}</Badge>
+            ))}
+          </div>
+        </TableCell>
+        <TableCell>
+          {p.accepted ? (
+            <div className="flex items-center gap-1 text-green-600 font-medium">
+              <CheckCircle2 className="size-4" /> Accepted
+            </div>
           ) : (
-            <TableRow>
-              <TableCell colSpan={4} className="text-center py-8">
-                No problems found.
-              </TableCell>
-            </TableRow>
+            <span className="text-muted-foreground">Not Accepted</span>
           )}
-        </TableBody>
+        </TableCell>
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={4} className="text-center py-8">
+        No problems found.
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
+
       </Table>
     </div>
   )
