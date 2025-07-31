@@ -25,16 +25,21 @@ const getAllSolutions = async (req, res) => {
       .populate("user", "username")
       .lean();
 
-    const formatted = solutions.map((sol) => ({
-      id: sol._id,
-      username: sol.user?.username || "Unknown User",
-      userId: sol.user?._id || "",
-      explanation: sol.explanation,
-      code: sol.code,
-      language: sol.language,
-      accepted: sol.accepted || false,
-      createdAt: sol.createdAt,
-    }));
+    const formatted = solutions.map((sol) => {
+      const liked = sol.likes?.some((uid) => uid.toString() === userId);
+      return {
+        id: sol._id,
+        username: sol.user?.username || "Unknown User",
+        userId: sol.user?._id || "",
+        explanation: sol.explanation,
+        code: sol.code,
+        language: sol.language,
+        accepted: sol.accepted || false,
+        createdAt: sol.createdAt,
+        likesCount: sol.likes?.length || 0,
+        liked, // 👈 ADD THIS
+      };
+    });
 
     res.status(200).json(formatted);
   } catch (error) {
@@ -42,6 +47,7 @@ const getAllSolutions = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
+
 
 // ✅ Get Total Solution Count (for stats)
 const getSolutionCount = async (req, res) => {
@@ -58,6 +64,8 @@ const getSolutionCount = async (req, res) => {
 const getSolutionById = async (req, res) => {
   try {
     const solutionId = req.params.id;
+    const userId = req.user.id;
+
     const solution = await Solution.findById(solutionId)
       .populate("user", "username")
       .populate("problem", "title")
@@ -66,6 +74,8 @@ const getSolutionById = async (req, res) => {
     if (!solution) {
       return res.status(404).json({ error: "Solution not found" });
     }
+
+    const liked = solution.likes?.some((uid) => uid.toString() === userId);
 
     res.status(200).json({
       id: solution._id,
@@ -77,12 +87,15 @@ const getSolutionById = async (req, res) => {
       explanation: solution.explanation,
       accepted: solution.accepted,
       createdAt: solution.createdAt,
+      likesCount: solution.likes?.length || 0,
+      liked, // 👈 This line is key
     });
   } catch (error) {
     console.error("Error fetching solution by ID:", error);
     res.status(500).json({ error: "Server Error" });
   }
-}; 
+};
+
 
 const submitSolution = async (req, res) => {
   try { 
@@ -153,6 +166,7 @@ const getUserSolutions = async (req, res) => {
       explanation: sol.explanation,
       accepted: sol.accepted,
       createdAt: sol.createdAt,
+      likes: sol.likes || []
     }));
 
     res.status(200).json(formatted);
@@ -198,11 +212,47 @@ const markSolutionAsAccepted = async (req, res) => {
   }
 };
 
+// ✅ Toggle like on a solution
+const toggleLikeSolution = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const solutionId = req.params.id;
+
+    const solution = await Solution.findById(solutionId);
+    if (!solution) {
+      return res.status(404).json({ error: "Solution not found." });
+    }
+
+    const alreadyLiked = solution.likes.includes(userId);
+
+    if (alreadyLiked) {
+      // Unlike
+      solution.likes.pull(userId);
+    } else {
+      // Like
+      solution.likes.push(userId);
+    }
+
+    await solution.save();
+
+    res.status(200).json({
+      message: alreadyLiked ? "Like removed." : "Solution liked!",
+      likesCount: solution.likes.length,
+      liked: !alreadyLiked,
+    });
+  } catch (error) {
+    console.error("Error toggling like:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
+
 module.exports = {
   getAllSolutions,
   getSolutionCount,
   getSolutionById,
   submitSolution,
   getUserSolutions,
-  markSolutionAsAccepted
+  markSolutionAsAccepted,
+  toggleLikeSolution
 };

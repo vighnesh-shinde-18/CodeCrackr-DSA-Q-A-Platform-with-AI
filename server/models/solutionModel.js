@@ -8,7 +8,8 @@ const solutionSchema = new mongoose.Schema({
   code: { type: String, required: true },
 language: { type: String, default: "javascript" },
   explanation: { type: String },
-  accepted: { type: Boolean, default: false }
+  accepted: { type: Boolean, default: false },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 }, { timestamps: true });
 
 module.exports =  mongoose.model("Solution", solutionSchema);

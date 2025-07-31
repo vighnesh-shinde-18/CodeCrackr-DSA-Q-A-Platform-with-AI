@@ -18,50 +18,41 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, Medal, Crown } from "lucide-react";
 
-const mockData = [
-  {
-    id: 1,
-    username: "vighnesh",
-    email: "vighnesh@gmail.com",
-    questionsSubmitted: 12,
-    answersReplied: 18,
-    answersAccepted: 9,
-  },
-  {
-    id: 2,
-    username: "akash",
-    email: "akash@gmail.com",
-    questionsSubmitted: 20,
-    answersReplied: 15,
-    answersAccepted: 5,
-  },
-  {
-    id: 3,
-    username: "raj",
-    email: "raj@gmail.com",
-    questionsSubmitted: 8,
-    answersReplied: 20,
-    answersAccepted: 12,
-  },
-];
-
 export default function LeaderboardTable() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("answersAccepted");
 
   useEffect(() => {
-    const calculateRankScore = (user) =>
-      user.answersAccepted * 5 +
-      user.answersReplied * 2 +
-      user.questionsSubmitted * 1;
+    const fetchUserStats = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/user/stats", {
+          credentials: "include",
+        });
+        const data = await res.json();
 
-    const dataWithScore = mockData.map((user) => ({
-      ...user,
-      rankScore: calculateRankScore(user),
-    }));
+        const calculateRankScore = (user) =>
+          user.totalAcceptedAnswers * 5 +
+          user.totalAnswersGiven * 2 +
+          user.totalQuestionsPosted * 1;
 
-    const sorted = [...dataWithScore].sort((a, b) => b[filter] - a[filter]);
-    setUsers(sorted);
+        const dataWithScore = data.map((user) => ({
+          id: user.userId,
+          username: user.username,
+          email: user.email,
+          questionsSubmitted: user.totalQuestionsPosted,
+          answersReplied: user.totalAnswersGiven,
+          answersAccepted: user.totalAcceptedAnswers,
+          rankScore: calculateRankScore(user),
+        }));
+
+        const sorted = [...dataWithScore].sort((a, b) => b[filter] - a[filter]);
+        setUsers(sorted);
+      } catch (err) {
+        console.error("Failed to load leaderboard data:", err);
+      }
+    };
+
+    fetchUserStats();
   }, [filter]);
 
   const getRankDisplay = (rank) => {
@@ -125,7 +116,6 @@ export default function LeaderboardTable() {
     }
   };
 
-
   return (
     <div className="p-4 mx-3 space-y-4 bg-white dark:bg-[#0f0f0f] rounded-xl transition-colors duration-300">
       <div className="flex justify-between items-center">
@@ -160,21 +150,11 @@ export default function LeaderboardTable() {
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-white dark:bg-zinc-900 shadow-sm">
               <TableRow className="border-b bg-gradient-to-r from-gray-50 to-gray-100 dark:from-zinc-700 dark:to-zinc-800">
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100">
-                  Rank
-                </TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100">
-                  User
-                </TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">
-                  Questions
-                </TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">
-                  Replies
-                </TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">
-                  Accepted
-                </TableHead>
+                <TableHead className="font-bold text-gray-800 dark:text-gray-100">Rank</TableHead>
+                <TableHead className="font-bold text-gray-800 dark:text-gray-100">User</TableHead>
+                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">Questions</TableHead>
+                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">Replies</TableHead>
+                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">Accepted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -185,14 +165,10 @@ export default function LeaderboardTable() {
                     key={user.id}
                     className={`transition-all duration-200 border-b last:border-b-0 ${getRowStyle(rank)}`}
                   >
-                    <TableCell className="py-4">
-                      {getRankDisplay(rank)}
-                    </TableCell>
+                    <TableCell className="py-4">{getRankDisplay(rank)}</TableCell>
                     <TableCell className="py-4">
                       <div className="space-y-1">
-                        <div className="font-semibold text-gray-900 dark:text-gray-100">
-                          {user.username}
-                        </div>
+                        <div className="font-semibold text-gray-900 dark:text-gray-100">{user.username}</div>
                         <div className="text-sm flex items-center gap-1 text-gray-500 dark:text-gray-300">
                           <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                           {user.email}
@@ -200,29 +176,13 @@ export default function LeaderboardTable() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right py-4">
-                      <Badge
-                        variant="outline"
-                        className="font-mono font-medium shadow-sm hover:shadow-md transition-shadow dark:border-zinc-600 dark:text-gray-100"
-                      >
-                        {user.questionsSubmitted}
-                      </Badge>
-
+                      <Badge variant="outline" className="font-mono font-medium">{user.questionsSubmitted}</Badge>
                     </TableCell>
                     <TableCell className="text-right py-4">
-                      <Badge
-                        variant="outline"
-                        className="font-mono font-medium shadow-sm hover:shadow-md transition-shadow dark:border-zinc-600 dark:text-gray-100"
-                      >
-                        {user.answersReplied}
-                      </Badge>
+                      <Badge variant="outline" className="font-mono font-medium">{user.answersReplied}</Badge>
                     </TableCell>
                     <TableCell className="text-right py-4">
-                      <Badge
-                        variant="outline"
-                        className="font-mono font-medium shadow-sm hover:shadow-md transition-shadow dark:border-zinc-600 dark:text-gray-100"
-                      >
-                        {user.answersAccepted}
-                      </Badge>
+                      <Badge variant="outline" className="font-mono font-medium">{user.answersAccepted}</Badge>
                     </TableCell>
                   </TableRow>
                 );

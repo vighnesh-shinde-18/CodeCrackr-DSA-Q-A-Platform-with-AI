@@ -1,4 +1,6 @@
 const User = require('../models/userModel');
+const Problem = require('../models/problemModel')
+const Solution = require('../models/solutionModel')
 
 const returnUserProfileInfo = async (req, res, next) => {
   try {
@@ -13,35 +15,41 @@ const returnUserProfileInfo = async (req, res, next) => {
   }
 };
 
-const getLeaderboardUsers = async (req, res) => {
+const getAllUserStats = async (req, res) => {
   try {
-    const users = await User.find({}).select("username email");
+    console.log(1)
+    const users = await User.find().lean();
+    console.log(2)
 
-    const leaderboardData = await Promise.all(
+    const stats = await Promise.all(
       users.map(async (user) => {
-        const questionsSubmitted = await Problem.countDocuments({ createdBy: user._id });
-        const answersReplied = await Solution.countDocuments({ createdBy: user._id });
-        const answersAccepted = await Solution.countDocuments({ createdBy: user._id, isAccepted: true });
+        const totalQuestionsPosted = await Problem.countDocuments({ user: user._id });
+        const totalAnswersGiven = await Solution.countDocuments({ user: user._id });
+        const totalAcceptedAnswers = await Solution.countDocuments({
+          user: user._id,
+          accepted: true,
+        });
 
         return {
-          id: user._id,
+          userId: user._id,
           username: user.username,
           email: user.email,
-          questionsSubmitted,
-          answersReplied,
-          answersAccepted
+          totalQuestionsPosted,
+          totalAnswersGiven,
+          totalAcceptedAnswers,
         };
       })
     );
+    console.log(3)
 
-    res.status(200).json(leaderboardData);
-  } catch (err) {
-    console.error("Error fetching leaderboard users:", err);
-    res.status(500).json({ error: "Failed to fetch leaderboard data" });
+    res.status(200).json(stats);
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    res.status(500).json({ error: "Server Error" });
   }
 };
 
-const getUsersCount = async(req,res,next)=>{
+const getUsersCount = async (req, res, next) => {
   try {
     const userCount = await User.countDocuments();
     res.status(200).json({ success: true, data: userCount });
@@ -51,7 +59,7 @@ const getUsersCount = async(req,res,next)=>{
 }
 
 module.exports = {
-returnUserProfileInfo,
-getUsersCount,
-getLeaderboardUsers
+  returnUserProfileInfo,
+  getUsersCount,
+  getAllUserStats
 }

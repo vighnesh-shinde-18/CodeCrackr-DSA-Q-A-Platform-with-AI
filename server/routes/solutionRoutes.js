@@ -10,7 +10,8 @@ const {
   getSolutionById,
   submitSolution,
   getUserSolutions,
-  markSolutionAsAccepted
+  markSolutionAsAccepted,
+  toggleLikeSolution
 } = require("../controllers/SolutionControllers.js");
 
 
@@ -20,5 +21,6 @@ router.post("/:id", authMiddleware, getSolutionById);
 router.post("/", authMiddleware, submitSolution);
 router.get("/user-solutions", authMiddleware, getUserSolutions);
 router.patch("/mark-accepted/:id", authMiddleware, markSolutionAsAccepted);
+router.patch("/like/:id", authMiddleware, toggleLikeSolution); 
 
 module.exports =  router;

@@ -79,6 +79,17 @@ export default function ProblemSolvingPage() {
     fetchProblem();
   }, [id]);
 
+  // Sync selectedReply with updated allReplies
+useEffect(() => {
+  if (selectedReply) {
+    const updatedReply = allReplies.find((r) => r._id === selectedReply._id || r.id === selectedReply.id);
+    if (updatedReply) {
+      setSelectedReply(updatedReply);
+    }
+  }
+}, [allReplies]);
+
+
   // 🔹 Accept Reply Handler
   const handleAcceptReply = (replyIndex) => {
     const updatedReplies = allReplies.map((r, idx) => ({
@@ -127,7 +138,6 @@ export default function ProblemSolvingPage() {
             {/* 🔹 Left column: Problem details & replies */}
             <div className="space-y-6">
               <ProblemDetails problem={problem} />
-
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-lg font-semibold">Other User Replies</h3>
