@@ -1,49 +1,47 @@
 const Problem = require("../models/problemModel.js");
 const Solution = require("../models/solutionModel.js");
-const reply = require("../models/replyModel.js")
 const stringSimilarity = require("string-similarity");
+const Reply = require("../models/replyModel.js");
 
-// GET: All Problems (with filters: topic, accepted, replied)
+ 
 const getAllProblems = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { topic, accepted, replied } = req.query;
+    const userId = req.user.id;
 
-    const problemFilter = topic ? { topics: topic } : {};
-    const problems = await Problem.find(problemFilter).lean();
-    const userSolutions = await Solution.find({ user: userId }).lean();
+    // 1️⃣ Get all problems
+    const problems = await Problem.find().lean();
 
-    const statusMap = {};
-    userSolutions.forEach((sol) => {
-      const pid = sol.problem.toString();
-      if (!statusMap[pid]) {
-        statusMap[pid] = { replied: true, accepted: sol.accepted || false };
-      } else if (sol.accepted) {
-        statusMap[pid].accepted = true;
+    // 2️⃣ Prepare response array
+    const response = [];
+
+    // 3️⃣ Loop over each problem and check if user has replied / accepted
+    for (const problem of problems) {
+      const problemId = problem._id;
+
+      // Find if the user submitted any solution for this problem
+      const userSolutions = await Solution.find({
+        user: userId,
+        problem: problemId,
+      }).lean();
+
+      let replied = false;
+      let accepted = false;
+
+      if (userSolutions.length > 0) {
+        replied = true;
+        accepted = userSolutions.some((sol) => sol.accepted === true);
       }
-    });
 
-    const filtered = problems.filter((p) => {
-      const pid = p._id.toString();
-      const s = statusMap[pid] || { replied: false, accepted: false };
-      const matchReplied = replied ? String(s.replied) === replied : true;
-      const matchAccepted = accepted ? String(s.accepted) === accepted : true;
-      return matchReplied && matchAccepted;
-    });
+      response.push({
+        id: problemId,
+        title: problem.title,
+        topics: problem.topics,
+        replied,
+        accepted,
+      });
+    }
 
-    const enriched = filtered.map((p) => {
-      const pid = p._id.toString();
-      return {
-        id: p._id,
-        title: p.title,
-        topics: p.topics,
-        replied: statusMap[pid]?.replied || false,
-        accepted: statusMap[pid]?.accepted || false,
-
-      };
-    });
-
-    res.status(200).json(enriched);
+    res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching problems:", error);
     res.status(500).json({ error: "Server Error" });

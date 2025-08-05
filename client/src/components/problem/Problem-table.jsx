@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import {
   useReactTable,
   getCoreRowModel,
@@ -84,67 +84,53 @@ export function ProblemTable() {
   const [acceptedFilter, setAcceptedFilter] = useState("All")
   const [repliedFilter, setRepliedFilter] = useState("All")
   const [problems, setProblems] = useState([])
-  const [originalProblems, setOriginalProblems] = useState([])
 
   const navigate = useNavigate()
 
-  // 🔹 Fetch all problems once for topic dropdown
+  // 🧠 Fetch problems from API once
   useEffect(() => {
-    const fetchAllProblems = async () => {
+    const fetchProblems = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/problems`, {
+        const res = await fetch("http://localhost:5000/api/problems", {
           method: "GET",
           credentials: "include",
         })
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || "Failed to fetch")
-        setOriginalProblems(data)
-      } catch (err) {
-        console.error("Fetch error (all):", err)
+        if (!res.ok) throw new Error(data.error || "Failed to fetch problems")
+        setProblems(data)
+      } catch (error) {
+        console.error("❌ Error fetching problems:", error)
       }
     }
 
-    fetchAllProblems()
+    fetchProblems()
   }, [])
 
-  // 🔹 Fetch filtered problems based on filters
-  useEffect(() => {
-    const fetchFilteredProblems = async () => {
-      try {
-        const queryParams = new URLSearchParams()
-        if (selectedTopic !== "All") queryParams.append("topic", selectedTopic)
-        if (acceptedFilter !== "All") queryParams.append("accepted", acceptedFilter === "Accepted")
-        if (repliedFilter !== "All") queryParams.append("replied", repliedFilter === "Replied")
-
-        const res = await fetch(`http://localhost:5000/api/problems?${queryParams.toString()}`, {
-          method: "GET",
-          credentials: "include",
-        })
-
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || "Failed to fetch")
-        setProblems(data)
-      } catch (err) {
-        console.error("Fetch error (filtered):", err)
-      }
-    }
-
-    fetchFilteredProblems()
-  }, [selectedTopic, acceptedFilter, repliedFilter])
-
-  // 🔹 Topic dropdown (from unfiltered data)
+  // 🧠 Extract topic options
   const topicOptions = useMemo(() => {
     const allTopics = new Set()
-    originalProblems.forEach((p) => p.topics?.forEach((t) => allTopics.add(t)))
+    problems.forEach((p) => p.topics.forEach((t) => allTopics.add(t)))
     return ["All", ...Array.from(allTopics)]
-  }, [originalProblems])
+  }, [problems])
 
+  // 🧠 Apply search and filter logic
   const filteredProblems = useMemo(() => {
-    if (!filter) return problems
-    return problems.filter((p) =>
-      p.title.toLowerCase().includes(filter.toLowerCase())
-    )
-  }, [filter, problems])
+    return problems.filter((p) => {
+      const matchesSearch = p.title.toLowerCase().includes(filter.toLowerCase())
+      const matchesTopic =
+        selectedTopic === "All" || p.topics.includes(selectedTopic)
+      const matchesAccepted =
+        acceptedFilter === "All" ||
+        (acceptedFilter === "Accepted" && p.accepted) ||
+        (acceptedFilter === "Not Accepted" && !p.accepted)
+      const matchesReplied =
+        repliedFilter === "All" ||
+        (repliedFilter === "Replied" && p.replied) ||
+        (repliedFilter === "Not Replied" && !p.replied)
+
+      return matchesSearch && matchesTopic && matchesAccepted && matchesReplied
+    })
+  }, [filter, selectedTopic, acceptedFilter, repliedFilter, problems])
 
   const table = useReactTable({
     data: filteredProblems,
@@ -159,55 +145,50 @@ export function ProblemTable() {
     onGlobalFilterChange: setFilter,
   })
 
-  const visitProblem = (problemId) => {
-    navigate(`/solve-problem/${problemId}`)
-  }
+  const visitProblem = (id) => navigate(`/solve-problem/${id}`)
 
   return (
     <div className="w-full space-y-4">
-      {/* 🔹 Filters Section */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      {/* 🔎 Filters */}
+      <div className="flex flex-wrap items-center gap-2">
         <Input
           placeholder="Search problems..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="w-full max-w-sm"
         />
-
         <select
           value={selectedTopic}
           onChange={(e) => setSelectedTopic(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-zinc-800 dark:text-white"
         >
-          {topicOptions.map((topic) => (
-            <option key={topic} value={topic}>
-              {topic}
+          {topicOptions.map((t) => (
+            <option key={t} value={t}>
+              {t}
             </option>
           ))}
         </select>
-
         <select
           value={acceptedFilter}
           onChange={(e) => setAcceptedFilter(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-zinc-800 dark:text-white"
         >
-          <option value="All">All</option>
-          <option value="Accepted">Accepted</option>
-          <option value="Not Accepted">Not Accepted</option>
+          <option>All</option>
+          <option>Accepted</option>
+          <option>Not Accepted</option>
         </select>
-
         <select
           value={repliedFilter}
           onChange={(e) => setRepliedFilter(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm dark:bg-zinc-800 dark:text-white"
         >
-          <option value="All">All</option>
-          <option value="Replied">Replied</option>
-          <option value="Not Replied">Not Replied</option>
+          <option>All</option>
+          <option>Replied</option>
+          <option>Not Replied</option>
         </select>
       </div>
 
-      {/* 🔹 Table */}
+      {/* 📋 Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -225,9 +206,9 @@ export function ProblemTable() {
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
+                  key={row.id}
                   className="cursor-pointer hover:bg-muted transition"
                   onClick={() => visitProblem(row.original.id)}
-                  key={row.id}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -247,7 +228,7 @@ export function ProblemTable() {
         </Table>
       </div>
 
-      {/* 🔹 Pagination */}
+      {/* ⏩ Pagination */}
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
