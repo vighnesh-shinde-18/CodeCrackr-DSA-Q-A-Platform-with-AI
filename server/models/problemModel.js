@@ -5,20 +5,21 @@ const testCaseSchema = new mongoose.Schema({
   output: String,
 });
 
+const reportSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  reportedAt: { type: Date, default: Date.now },
+});
+
 const problemSchema = new mongoose.Schema(
   {
-    problemNumber: {
-      type: Number,
-      unique: true,
-    },
     title: { type: String, required: true, unique: true },
     description: { type: String, required: true },
     topics: [String],
     testCases: [testCaseSchema],
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    reports: [reportSchema],
   },
   { timestamps: true }
 );
 
-// Correct CommonJS export
 module.exports = mongoose.model("Problem", problemSchema);

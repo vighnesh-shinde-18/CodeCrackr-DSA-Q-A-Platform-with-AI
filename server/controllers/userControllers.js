@@ -58,6 +58,7 @@ const getUsersCount = async (req, res, next) => {
   }
 }
 
+
 module.exports = {
   returnUserProfileInfo,
   getUsersCount,

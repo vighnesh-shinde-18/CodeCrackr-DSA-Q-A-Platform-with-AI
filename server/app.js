@@ -36,13 +36,13 @@ app.use(session({
 app.use(helmet());
 app.use(morgan("dev"));
 
-// Rate limiting
-// const limiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 100,
-//   message: "Too many requests from this IP, please try again later.",
-// });
-// app.use("/api", limiter);
+ 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: "Too many requests from this IP, please try again later.",
+});
+app.use("/api", limiter);
 
 
 
@@ -51,30 +51,14 @@ const allowedOrigins = process.env.FRONTEND_URL;
 console.log("Allowed Origins:", allowedOrigins);
 
 
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     console.log("🔍 Incoming origin:", origin);
-//     if (!origin) return callback(null, true); // Allow tools like Postman
-//     if (allowedOrigins == origin) {
-//       console.log("✅ CORS allowed for:", origin);
-//       return callback(null, true);
-//     } else {
-//       console.log("❌ CORS blocked for:", origin);
-//       return callback(new Error("Not allowed by CORS"));
-//     }
-//   },
-//   credentials: true,
-// }));
-
-
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // or hardcoded 'http://localhost:5173'
+  origin: process.env.FRONTEND_URL, 
   credentials: true,
 }));
 
-// app.use(express.json({ limit: "10kb" }));
-app.use(express.json());
+app.use(express.json({ limit: "10kb" }));
+// app.use(express.json());
 app.use(cookieParser());
 
 

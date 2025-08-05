@@ -1,5 +1,6 @@
 const Problem = require("../models/problemModel.js");
 const Solution = require("../models/solutionModel.js");
+const reply = require("../models/replyModel.js")
 const stringSimilarity = require("string-similarity");
 
 // GET: All Problems (with filters: topic, accepted, replied)
@@ -38,6 +39,7 @@ const getAllProblems = async (req, res) => {
         topics: p.topics,
         replied: statusMap[pid]?.replied || false,
         accepted: statusMap[pid]?.accepted || false,
+
       };
     });
 
@@ -63,7 +65,10 @@ const getProblemCount = async (req, res) => {
 const getProblemById = async (req, res) => {
   try {
     const problemId = req.params.id;
-    const problem = await Problem.findById(problemId).lean();
+
+    const problem = await Problem.findById(problemId)
+      .populate("user", "username") // ✅ populate uploader's username
+      .lean();
 
     if (!problem) {
       return res.status(404).json({ error: "Problem not found" });
@@ -75,7 +80,8 @@ const getProblemById = async (req, res) => {
       description: problem.description,
       topics: problem.topics,
       testCases: problem.testCases,
-      user: problem.user,
+      username: problem.user?.username || "Unknown", // ✅ include username
+      userId: problem.user._id
     });
   } catch (error) {
     console.error("Error fetching problem by ID:", error);
@@ -83,29 +89,27 @@ const getProblemById = async (req, res) => {
   }
 };
 
+
 // POST: Create a new problem
 const createProblem = async (req, res) => {
   try {
     const userId = req.user.id;
-
     const { title, description, topics, testCases } = req.body;
 
-    const existingProblems = await Problem.find().lean();
+    if (!title || !description || !Array.isArray(topics) || !Array.isArray(testCases)) {
+      return res.status(400).json({ error: "All fields are required with valid format." });
+    }
 
+    const existingProblems = await Problem.find().lean();
     const newCombined = `${title} ${description}`.toLowerCase();
 
     for (const p of existingProblems) {
       const existingCombined = `${p.title} ${p.description}`.toLowerCase();
       const similarity = stringSimilarity.compareTwoStrings(newCombined, existingCombined);
 
-
       if (similarity > 0.85) {
         return res.status(409).json({ error: "This problem seems similar to an existing one." });
       }
-    }
-
-    if (!title || !description || !Array.isArray(topics) || !Array.isArray(testCases)) {
-      return res.status(400).json({ error: "All fields are required with valid format." });
     }
 
     const existing = await Problem.findOne({ title });
@@ -113,22 +117,17 @@ const createProblem = async (req, res) => {
       return res.status(409).json({ error: "A problem with this title already exists." });
     }
 
-
-    const latestProblem = await Problem.findOne().sort({ problemNumber: -1 })
-
     const newProblem = new Problem({
       title,
       description,
       topics,
       testCases,
-      user: userId,
-      problemNumber: latestProblem ? latestProblem.problemNumber + 1 : 1,
+      user: userId
     });
 
     await newProblem.save();
 
     res.status(201).json({ message: "Problem uploaded successfully", problemId: newProblem._id });
-    console.log("13")
   } catch (error) {
     console.error("Error creating problem:", error);
     res.status(500).json({ error: "Server Error" });
@@ -141,10 +140,7 @@ const getUserSolvedProblems = async (req, res) => {
     const userId = req.user.id;
     const { topic, accepted } = req.body;
 
-    // Get all solutions by the user with populated problem data
-    const userSolutions = await Solution.find({ user: userId })
-      .populate("problem")
-      .lean();
+    const userSolutions = await Solution.find({ user: userId }).populate("problem").lean();
 
     const seen = new Set();
     const result = [];
@@ -154,20 +150,13 @@ const getUserSolvedProblems = async (req, res) => {
       if (!problem) continue;
 
       const problemId = problem._id.toString();
- 
       if (seen.has(problemId)) continue;
       seen.add(problemId);
- 
-      if (topic && topic !== "All" && !problem.topics.includes(topic)) {
-        continue;
-      }
- 
-      if (accepted === true && sol.accepted !== true) {
-        continue; 
-      } else if (accepted === false && sol.accepted !== false) {
-        continue; 
-      }
- 
+
+      if (topic && topic !== "All" && !problem.topics.includes(topic)) continue;
+      if (accepted === true && !sol.accepted) continue;
+      if (accepted === false && sol.accepted) continue;
+
       result.push({
         id: problem._id,
         title: problem.title,
@@ -183,8 +172,6 @@ const getUserSolvedProblems = async (req, res) => {
   }
 };
 
-
-
 // GET: Uploaded problems by user
 const getUserUploadedProblems = async (req, res) => {
   try {
@@ -199,20 +186,15 @@ const getUserUploadedProblems = async (req, res) => {
 
     const solutionCounts = await Solution.aggregate([
       { $match: { problem: { $in: problemIds } } },
-      {
-        $group: {
-          _id: "$problem",
-          count: { $sum: 1 },
-        },
-      },
+      { $group: { _id: "$problem", count: { $sum: 1 } } },
     ]);
 
     const countMap = {};
-    solutionCounts.forEach((entry) => {
+    solutionCounts.forEach(entry => {
       countMap[entry._id.toString()] = entry.count;
     });
 
-    const enriched = problems.map((p) => ({
+    const enriched = problems.map(p => ({
       id: p._id,
       title: p.title,
       topics: p.topics,
@@ -228,11 +210,62 @@ const getUserUploadedProblems = async (req, res) => {
   }
 };
 
+// PATCH: Report or unreport a question
+const toggleReportQuestion = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const problemId = req.params.id;
+
+    const problem = await Problem.findById(problemId);
+    if (!problem) {
+      return res.status(404).json({ error: "Problem not found." });
+    }
+
+    const reportIndex = problem.reports.findIndex(r => r.user.toString() === userId);
+
+    if (reportIndex !== -1) {
+      problem.reports.splice(reportIndex, 1);
+      await problem.save();
+      return res.status(200).json({ message: "Problem unreported successfully." });
+    }
+
+    problem.reports.push({ user: userId });
+    await problem.save();
+
+    res.status(200).json({ message: "Problem reported successfully." });
+  } catch (error) {
+    console.error("Error reporting problem:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
+// DELETE: Delete a problem (Admin only)
+const deleteQuestion = async (req, res) => {
+  try {
+    const problemId = req.params.id;
+
+    const problem = await Problem.findById(problemId);
+    if (!problem) {
+      return res.status(404).json({ error: "Problem not found." });
+    }
+
+    await Solution.deleteMany({ problem: problem._id });
+    await problem.deleteOne();
+
+    res.status(200).json({ message: "Problem and associated solutions deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting problem:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
 module.exports = {
   getProblemCount,
   getAllProblems,
   getProblemById,
   createProblem,
   getUserSolvedProblems,
-  getUserUploadedProblems
+  getUserUploadedProblems,
+  toggleReportQuestion,
+  deleteQuestion,
 };

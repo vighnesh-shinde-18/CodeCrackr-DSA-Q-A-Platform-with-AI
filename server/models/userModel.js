@@ -19,14 +19,16 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 6,
-    select: false,
-    required: function () {
-      return !this.googleId;  // Or similar check
-    },
+    select: false
   },
   resetPasswordOTP: {
     type: String,
     default: null,
+  },
+  isAdmin:{
+    type: Boolean,
+    required: true,
+    default:false
   }
 }, { timestamps: true });
 

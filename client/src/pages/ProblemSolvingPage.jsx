@@ -10,15 +10,16 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 export default function ProblemSolvingPage() {
   const { id } = useParams(); // Get problem ID from route
   const [problem, setProblem] = useState(null);
-  const [allReplies, setAllReplies] = useState([]);
-  const [currentUserId, setCurrentUserId] = useState(777);
+  const [allSolutions, setAllSolutions] = useState([]);
+  const [currentUser, setCurrentUser] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [selectedReply, setSelectedReply] = useState(null);
+  const [selectedSolution, setSelectedSolution] = useState(null);
   const [showEditor, setShowEditor] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
 
+  const [selectedSolutionId, setSelectedSolutionId] = useState(null);
   // 🔹 Fetch logged-in user
   const fetchCurrentUser = async () => {
     try {
@@ -27,29 +28,29 @@ export default function ProblemSolvingPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setCurrentUserId(data.data._id)
+        setCurrentUser(data.data)
       } else {
         throw new Error("User not authenticated");
       }
     } catch (err) {
       console.error("Error fetching user:", err);
-      setCurrentUserId(""); // Fallback
+      setCurrentUser(""); // Fallback
     }
   };
 
   // 🔹 Fetch problem & replies
-  const fetchReplies = async (problemId) => {
+  const fetchSolutions = async (problemId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/solutions/${problemId}`, {
+      const res = await fetch(`http://localhost:5000/api/solutions/problem/${problemId}`, {
         credentials: "include",
         method: "GET"
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load replies");
-      setAllReplies(data);
+      setAllSolutions(data);
     } catch (err) {
       console.error("Error fetching replies:", err);
-      setAllReplies([]);
+      setAllSolutions([]);
     }
   };
 
@@ -64,7 +65,7 @@ export default function ProblemSolvingPage() {
       if (!res.ok) throw new Error(data.error || "Failed to load problem");
 
       setProblem(data);
-      fetchReplies(data.id); // Use .id or ._id as per your backend response
+      fetchSolutions(data.id); // Use .id or ._id as per your backend response
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -80,45 +81,40 @@ export default function ProblemSolvingPage() {
   }, [id]);
 
   // Sync selectedReply with updated allReplies
-useEffect(() => {
-  if (selectedReply) {
-    const updatedReply = allReplies.find((r) => r._id === selectedReply._id || r.id === selectedReply.id);
-    if (updatedReply) {
-      setSelectedReply(updatedReply);
+  useEffect(() => {
+    if (selectedSolution) {
+      const updatedSolutions = allSolutions.find((r) => r._id === selectedReply._id || r.id === selectedReply.id);
+      if (updatedSolutions) {
+        setSelectedSolution(updatedSolutions);
+      }
     }
-  }
-}, [allReplies]);
+  }, [allSolutions]);
 
 
   // 🔹 Accept Reply Handler
-  const handleAcceptReply = (replyIndex) => {
-    const updatedReplies = allReplies.map((r, idx) => ({
+  const handleAcceptSolution = (solutionIndex) => {
+    const updatedSolutions = allSolutions.map((r, idx) => ({
       ...r,
-      accepted: idx === replyIndex,
+      accepted: idx === solutionIndex,
     }));
-    setAllReplies(updatedReplies);
-    setSelectedReply(updatedReplies[replyIndex]);
-    alert("✅ Marked this solution as Accepted");
+    setAllSolutions(updatedSolutions);
+    setSelectedSolution(updatedSolutions[solutionIndex]);
+    alert("Marked this solution as Accepted");
   };
 
-  // 🔹 Filtered Replies
-  const filteredReplies = allReplies.filter((reply) => {
-    if (filterStatus === "all") return true;
-    if (filterStatus === "accepted") return reply.accepted;
-    if (filterStatus === "not_accepted") return !reply.accepted;
-    if (filterStatus === "mine") return reply.userId === currentUserId;
-    return true;
-  });
+
 
   // 🔹 View/Reset Handler
-  const handleViewReply = (reply) => {
-    setSelectedReply(reply);
+  const handleViewSolution = (solution) => {
+    setSelectedSolution(solution);
     setShowEditor(false);
+    setSelectedSolutionId(solution.id);
   };
 
   const handleResetEditor = () => {
-    setSelectedReply(null);
+    setSelectedSolution(null);
     setShowEditor(true);
+    setSelectedSolutionId(null);
   };
 
   if (loading) return <div className="p-6">Loading...</div>;
@@ -135,9 +131,8 @@ useEffect(() => {
         <SiteHeader />
         <div className="flex flex-col gap-6 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* 🔹 Left column: Problem details & replies */}
             <div className="space-y-6">
-              <ProblemDetails problem={problem} />
+              <ProblemDetails problem={problem} currentUser={currentUser} />
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-lg font-semibold">Other User Replies</h3>
@@ -151,13 +146,13 @@ useEffect(() => {
                     <option value="not_accepted">Not Accepted</option>
                     <option value="mine">Submitted by Me</option>
                   </select>
-                </div>
-
+                </div> 
                 <SolutionReplies
-                  replies={filteredReplies}
-                  onViewReply={handleViewReply}
-                  showAcceptButton={currentUserId === problem.user}
-                  onAcceptReply={handleAcceptReply}
+                  allSolutions={allSolutions}
+                  onViewSolution={handleViewSolution}
+                  selectedSolutionId={selectedSolutionId}
+                  setSelectedSolutionId={setSelectedSolutionId}
+                  currentUserId={currentUser._id}
                 />
               </div>
             </div>
@@ -167,7 +162,7 @@ useEffect(() => {
                 <h2 className="text-xl font-semibold">
                   {showEditor
                     ? "Submit Your Solution"
-                    : `${selectedReply?.username}'s Solution`}
+                    : `${selectedSolution?.username}'s Solution`}
                 </h2>
                 {!showEditor && (
                   <button
@@ -178,15 +173,15 @@ useEffect(() => {
                   </button>
                 )}
               </div>
-
+              {console.log(problem)}  
               <SolutionInput
                 showEditor={showEditor}
-                selectedReply={selectedReply}
-                currentUserId={currentUserId}
-                isUploader={currentUserId === problem.user}
-                onAcceptReply={handleAcceptReply}
-                allReplies={allReplies}
-                fetchReplies={fetchProblem}
+                selectedSolution={selectedSolution}
+                currentUser={currentUser}
+                isUploader={currentUser._id === problem.userId}
+                handleAcceptSolution={handleAcceptSolution}
+                fetchSolutions={fetchSolutions}
+                problemId={problem.id}
               />
 
             </div>

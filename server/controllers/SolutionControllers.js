@@ -4,6 +4,7 @@ const Problem = require("../models/problemModel.js");
 const Solution = require("../models/solutionModel.js");
 const User = require("../models/userModel.js");
 const stringSimilarity = require("string-similarity");
+const Reply = require("../models/replyModel.js")
 
 // ✅ Get All Solutions for a Problem (with filters)
 const getAllSolutions = async (req, res) => {
@@ -27,6 +28,8 @@ const getAllSolutions = async (req, res) => {
 
     const formatted = solutions.map((sol) => {
       const liked = sol.likes?.some((uid) => uid.toString() === userId);
+      const reported = sol.reports?.some((r) => r.user.toString() === userId);
+
       return {
         id: sol._id,
         username: sol.user?.username || "Unknown User",
@@ -37,7 +40,10 @@ const getAllSolutions = async (req, res) => {
         accepted: sol.accepted || false,
         createdAt: sol.createdAt,
         likesCount: sol.likes?.length || 0,
-        liked, // 👈 ADD THIS
+        liked,
+        reportCount: sol.reports?.length || 0,
+        reported,
+        replyCount: sol.replies?.length || 0,
       };
     });
 
@@ -61,6 +67,7 @@ const getSolutionCount = async (req, res) => {
 };
 
 // ✅ Get a Specific Solution by ID
+
 const getSolutionById = async (req, res) => {
   try {
     const solutionId = req.params.id;
@@ -76,6 +83,19 @@ const getSolutionById = async (req, res) => {
     }
 
     const liked = solution.likes?.some((uid) => uid.toString() === userId);
+    const reported = solution.reports?.some((uid) => uid.toString() === userId);
+
+    // 🔹 Get all replies for this solution, with username of replier
+    const replies = await Reply.find({ solution: solutionId })
+      .populate("user", "username")
+      .lean();
+
+    const formattedReplies = replies.map((r) => ({
+      id: r._id,
+      reply: r.reply,
+      username: r.user?.username || "Unknown",
+      createdAt: r.createdAt,
+    }));
 
     res.status(200).json({
       id: solution._id,
@@ -88,32 +108,37 @@ const getSolutionById = async (req, res) => {
       accepted: solution.accepted,
       createdAt: solution.createdAt,
       likesCount: solution.likes?.length || 0,
-      liked, // 👈 This line is key
+      liked,
+      reportCount: solution.reports?.length || 0,
+      reported,
+      replyCount: replies.length,
+      replies: formattedReplies,
     });
   } catch (error) {
     console.error("Error fetching solution by ID:", error);
     res.status(500).json({ error: "Server Error" });
   }
 };
+ 
 
 
 const submitSolution = async (req, res) => {
-  try { 
-    const userId = req.user.id; 
-    const { problemId, code, explanation, language } = req.body; 
+  try {
+    const userId = req.user.id;
+    const { problemId, code, explanation, language } = req.body;
 
-    if (!problemId || !code || !explanation || !language) { 
+    if (!problemId || !code || !explanation || !language) {
       return res.status(400).json({ error: "All fields are required." });
-    } 
+    }
 
     const problem = await Problem.findById(problemId);
-   
-    if (!problem) { 
+
+    if (!problem) {
       return res.status(404).json({ error: "Problem not found." });
-    } 
+    }
 
     const existingSolutions = await Solution.find({ problem: problemId, user: userId });
-  
+
     for (const sol of existingSolutions) {
       const similarity = stringSimilarity.compareTwoStrings(
         `${sol.code} ${sol.explanation}`.toLowerCase(),
@@ -125,7 +150,7 @@ const submitSolution = async (req, res) => {
           error: "You already submitted a similar solution to this problem.",
         });
       }
-    } 
+    }
 
     const newSolution = new Solution({
       problem: problemId,
@@ -135,8 +160,8 @@ const submitSolution = async (req, res) => {
       explanation,
       accepted: false,
     });
- 
-    await newSolution.save(); 
+
+    await newSolution.save();
 
     res.status(201).json({
       message: "Solution submitted successfully",
@@ -147,7 +172,7 @@ const submitSolution = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
- 
+
 const getUserSolutions = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -166,7 +191,11 @@ const getUserSolutions = async (req, res) => {
       explanation: sol.explanation,
       accepted: sol.accepted,
       createdAt: sol.createdAt,
-      likes: sol.likes || []
+      likesCount: sol.likes?.length || 0,
+      liked,
+      reportCount: sol.reports?.length || 0,
+      reported,
+      replyCount: sol.replies?.length || 0,
     }));
 
     res.status(200).json(formatted);
@@ -177,33 +206,33 @@ const getUserSolutions = async (req, res) => {
 };
 
 const markSolutionAsAccepted = async (req, res) => {
-  try { 
-    const userId = req.user.id; 
-    const solutionId = req.params.id; 
-     
+  try {
+    const userId = req.user.id;
+    const solutionId = req.params.id;
+
     const solution = await Solution.findById(solutionId);
-    
-    if (!solution) { 
+
+    if (!solution) {
       return res.status(404).json({ error: "Solution not found." });
-    } 
-    
+    }
+
     const problem = await Problem.findById(solution.problem);
-    
-    if (!problem) { 
+
+    if (!problem) {
       return res.status(404).json({ error: "Problem not found." });
     }
-     
-    if (problem.user.toString() !== userId.toString()) { 
+
+    if (problem.user.toString() !== userId.toString()) {
       return res.status(403).json({ error: "You are not authorized to accept a solution for this problem." });
     }
-     
+
     await Solution.updateMany(
       { problem: solution.problem, accepted: true },
       { $set: { accepted: false } }
-    ); 
-    
+    );
+
     solution.accepted = true;
-    await solution.save(); 
+    await solution.save();
 
     res.status(200).json({ message: "Solution marked as accepted successfully." });
   } catch (error) {
@@ -246,6 +275,95 @@ const toggleLikeSolution = async (req, res) => {
   }
 };
 
+const toggleReportSolution = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const solutionId = req.params.id;
+
+    const solution = await Solution.findById(solutionId);
+    if (!solution) {
+      return res.status(404).json({ error: "Solution not found." });
+    }
+
+    const reportIndex = solution.reports.findIndex(
+      (r) => r.user.toString() === userId
+    );
+
+    if (reportIndex !== -1) {
+      // User already reported → unreport
+      solution.reports.splice(reportIndex, 1);
+      await solution.save();
+      return res.status(200).json({ message: "Solution unreported successfully." });
+    }
+
+    // Add new report
+    solution.reports.push({ user: userId });
+    await solution.save();
+
+    return res.status(200).json({ message: "Solution reported successfully." });
+  } catch (error) {
+    console.error("Error reporting/unreporting solution:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
+
+const replyToSolution = async (req, res) => {
+  try {
+    const userId = req.user.id;  // assuming verifyToken middleware sets req.user
+    const  solutionId  = req.params.id; // ✅ Get from route param
+    const { text } = req.body;
+
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ error: "Reply text is required." });
+    }
+
+    const solution = await Solution.findById(solutionId);
+    if (!solution) {
+      return res.status(404).json({ error: "Solution not found." });
+    }
+
+    const newReply = new Reply({
+      solution: solutionId,
+      user: userId,
+      reply: text,
+    });
+
+    await newReply.save();
+
+    return res.status(201).json({ message: "Reply added successfully." });
+  } catch (error) {
+    console.error("Error replying to solution:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
+
+
+
+const deleteSolution = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const solutionId = req.params.id;
+
+    console.log(req.user);
+
+    const solution = await Solution.findById(solutionId);
+    if (!solution) {
+      return res.status(404).json({ error: "Solution not found." });
+    }
+
+ 
+
+    await solution.deleteOne();
+
+    res.status(200).json({ message: "Solution deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting solution:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+
 
 module.exports = {
   getAllSolutions,
@@ -254,5 +372,10 @@ module.exports = {
   submitSolution,
   getUserSolutions,
   markSolutionAsAccepted,
-  toggleLikeSolution
+  toggleLikeSolution,
+  toggleReportSolution,
+  replyToSolution,
+  deleteSolution
 };
+
+

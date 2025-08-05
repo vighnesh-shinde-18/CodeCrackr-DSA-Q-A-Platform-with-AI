@@ -1,13 +1,54 @@
-export default function ProblemDetails({ problem }) {
+import { useNavigate } from "react-router-dom";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+export default function ProblemDetails({ problem, currentUser }) {
+  const navigate = useNavigate();
+
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this problem?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/problem/${problem.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Problem deleted successfully.");
+        navigate("/problems"); // or wherever your problems list route is
+      } else {
+        toast.error(data.error || "Failed to delete problem.");
+      }
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Something went wrong.");
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 shadow p-6 rounded-md space-y-5 border">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full">
         <h1 className="text-2xl font-bold">{problem.title}</h1>
-        {problem.username && (
-          <span className="text-sm mt-2 sm:mt-0 text-muted-foreground">
-            Uploaded by <span className="font-medium text-blue-600">{problem.username}</span>
-          </span>
-        )}
+        <div className="flex items-center gap-2 mt-2 sm:mt-0">
+          {problem.username && (
+            <span className="text-sm text-muted-foreground">
+              Uploaded by{" "}
+              <span className="font-medium text-blue-600">{problem.username}</span>
+            </span>
+          )}
+          {currentUser?.isAdmin && (
+            <button
+              onClick={handleDelete}
+              className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1 ml-3 cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="text-gray-700 dark:text-gray-300">{problem.description}</p>

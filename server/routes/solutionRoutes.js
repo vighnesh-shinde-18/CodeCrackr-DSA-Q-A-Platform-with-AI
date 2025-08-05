@@ -1,8 +1,6 @@
-const express = require("express");
-const SolutionControllers = require("../controllers/SolutionControllers");
+const express = require("express"); 
 const authMiddleware = require("../middleware/authMiddleware");
-
-const router = express.Router();
+const adminMiddleware = require("../middleware/adminMiddleware.js");
 
 const {
   getAllSolutions,
@@ -11,16 +9,32 @@ const {
   submitSolution,
   getUserSolutions,
   markSolutionAsAccepted,
-  toggleLikeSolution
+  toggleLikeSolution,
+  toggleReportSolution,
+  replyToSolution,
+  deleteSolution
 } = require("../controllers/SolutionControllers.js");
 
+const router = express.Router(); 
 
-router.get("/solution-count",authMiddleware, getSolutionCount);
-router.get("/:id",authMiddleware, getAllSolutions);
-router.post("/:id", authMiddleware, getSolutionById);
+router.get("/solution-count", authMiddleware, getSolutionCount);
+
+router.get("/problem/:id", authMiddleware, getAllSolutions);
+
+router.get("/:id", authMiddleware, getSolutionById); 
+ 
 router.post("/", authMiddleware, submitSolution);
+ 
 router.get("/user-solutions", authMiddleware, getUserSolutions);
-router.patch("/mark-accepted/:id", authMiddleware, markSolutionAsAccepted);
-router.patch("/like/:id", authMiddleware, toggleLikeSolution); 
+ 
+router.patch("/accept/:id", authMiddleware, markSolutionAsAccepted);
+ 
+router.patch("/like/:id", authMiddleware, toggleLikeSolution);
+ 
+router.patch("/report/:id", authMiddleware, toggleReportSolution);
+ 
+router.post("/reply/:id", authMiddleware, replyToSolution);
 
-module.exports =  router;
+router.delete("/:id", authMiddleware,adminMiddleware, deleteSolution); 
+
+module.exports = router;
