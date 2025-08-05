@@ -191,11 +191,14 @@ export function ProblemTable() {
       {/* 📋 Table */}
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
+          <TableHeader  >
             {table.getHeaderGroups().map((group) => (
               <TableRow key={group.id}>
                 {group.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className=" font-semibold"
+                  >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}

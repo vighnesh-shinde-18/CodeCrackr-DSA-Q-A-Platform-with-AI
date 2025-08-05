@@ -168,10 +168,7 @@ export default function SolutionInput({
   };
 
   const handleDeleteSolution = async () => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this solution?");
-    if (!confirmDelete) {
-      return;
-    }
+   
 
     try {
       const res = await fetch(`http://localhost:5000/api/solutions/${selectedSolution.id}`, {
