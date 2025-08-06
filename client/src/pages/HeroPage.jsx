@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   RocketIcon,
@@ -13,9 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const Hero = () => {
-  const gitHubUrl = "https://github.com/vighnesh-shinde-18/CodeCrackr";
+const Hero = React.memo(() => {
   const navigate = useNavigate();
+  const gitHubUrl = "https://github.com/vighnesh-shinde-18/CodeCrackr";
+
+  const handleStart = useCallback(() => {
+    navigate("/login");
+  }, [navigate]);
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-white dark:bg-black px-4 py-12 transition-colors duration-300">
@@ -31,7 +35,7 @@ const Hero = () => {
               A Stack Overflow-inspired platform for DSA questions. Ask, answer, and get AI help to debug, explain, or improve your solutions.
             </p>
             <div className="flex justify-center pt-2">
-              <Button onClick={() => navigate("/login")} size="lg" className="gap-2">
+              <Button onClick={handleStart} size="lg" className="gap-2">
                 <RocketIcon className="w-5 h-5" />
                 Get Started
               </Button>
@@ -77,6 +81,6 @@ const Hero = () => {
       </Card>
     </section>
   );
-};
+});
 
 export default Hero;

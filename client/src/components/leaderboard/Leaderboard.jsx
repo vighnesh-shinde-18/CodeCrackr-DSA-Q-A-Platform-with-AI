@@ -1,41 +1,43 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import React, { useEffect, useState, useMemo } from "react";
+import axios from "axios";
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
+  Table, TableHeader, TableRow, TableHead, TableBody, TableCell,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
+  Select, SelectTrigger, SelectContent, SelectItem, SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, Medal, Crown } from "lucide-react";
+import { toast } from "sonner";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function LeaderboardTable() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("answersAccepted");
+  const [loading, setLoading] = useState(false);
+
+  // Rank calculation logic
+  const calculateRankScore = (user) =>
+    user.totalAcceptedAnswers * 5 +
+    user.totalAnswersGiven * 2 +
+    user.totalQuestionsPosted * 1;
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchUserStats = async () => {
+      setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/user/stats", {
-          credentials: "include",
+        const res = await axios.get(`${BASE_URL}/api/user/stats`, {
+          withCredentials: true,
+          signal: controller.signal,
         });
-        const data = await res.json();
 
-        const calculateRankScore = (user) =>
-          user.totalAcceptedAnswers * 5 +
-          user.totalAnswersGiven * 2 +
-          user.totalQuestionsPosted * 1;
-
-        const dataWithScore = data.map((user) => ({
+        const dataWithScore = res.data.map((user) => ({
           id: user.userId,
           username: user.username,
           email: user.email,
@@ -48,11 +50,18 @@ export default function LeaderboardTable() {
         const sorted = [...dataWithScore].sort((a, b) => b[filter] - a[filter]);
         setUsers(sorted);
       } catch (err) {
-        console.error("Failed to load leaderboard data:", err);
+        if (!axios.isCancel(err)) {
+          toast.error("Failed to load leaderboard data");
+          console.error(err);
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUserStats();
+
+    return () => controller.abort();
   }, [filter]);
 
   const getRankDisplay = (rank) => {
@@ -91,13 +100,9 @@ export default function LeaderboardTable() {
         return (
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-xs font-medium text-muted-foreground">
-                {rank}
-              </span>
+              <span className="text-xs font-medium text-muted-foreground">{rank}</span>
             </div>
-            <Badge variant="outline" className="font-mono font-medium">
-              #{rank}
-            </Badge>
+            <Badge variant="outline" className="font-mono font-medium">#{rank}</Badge>
           </div>
         );
     }
@@ -118,21 +123,21 @@ export default function LeaderboardTable() {
 
   return (
     <div className="p-4 mx-3 space-y-4 bg-white dark:bg-[#0f0f0f] rounded-xl transition-colors duration-300">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div className="relative">
             <Trophy className="w-8 h-8 text-yellow-500" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />
           </div>
           <div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-zinc-800 to-gray-500 dark:from-white dark:to-zinc-300 bg-clip-text text-transparent">
               Leaderboard
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Top performers ranked by activity
-            </p>
+            <p className="text-sm text-muted-foreground">Top performers ranked by activity</p>
           </div>
         </div>
+
         <Select onValueChange={setFilter} defaultValue={filter}>
           <SelectTrigger className="w-[240px] shadow-sm dark:bg-zinc-800 dark:text-white">
             <SelectValue placeholder="Sort by" />
@@ -145,6 +150,7 @@ export default function LeaderboardTable() {
         </Select>
       </div>
 
+      {/* Table */}
       <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50 dark:from-zinc-800 dark:to-zinc-900">
         <CardContent className="p-0">
           <Table>
@@ -152,41 +158,61 @@ export default function LeaderboardTable() {
               <TableRow className="border-b bg-gradient-to-r from-gray-50 to-gray-100 dark:from-zinc-700 dark:to-zinc-800">
                 <TableHead className="font-bold text-gray-800 dark:text-gray-100">Rank</TableHead>
                 <TableHead className="font-bold text-gray-800 dark:text-gray-100">User</TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">Questions</TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">Replies</TableHead>
-                <TableHead className="font-bold text-gray-800 dark:text-gray-100 text-right">Accepted</TableHead>
+                <TableHead className="text-right font-bold text-gray-800 dark:text-gray-100">Questions</TableHead>
+                <TableHead className="text-right font-bold text-gray-800 dark:text-gray-100">Replies</TableHead>
+                <TableHead className="text-right font-bold text-gray-800 dark:text-gray-100">Accepted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user, index) => {
-                const rank = index + 1;
-                return (
-                  <TableRow
-                    key={user.id}
-                    className={`transition-all duration-200 border-b last:border-b-0 ${getRowStyle(rank)}`}
-                  >
-                    <TableCell className="py-4">{getRankDisplay(rank)}</TableCell>
-                    <TableCell className="py-4">
-                      <div className="space-y-1">
-                        <div className="font-semibold text-gray-900 dark:text-gray-100">{user.username}</div>
-                        <div className="text-sm flex items-center gap-1 text-gray-500 dark:text-gray-300">
-                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                          {user.email}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                    Loading leaderboard...
+                  </TableCell>
+                </TableRow>
+              ) : users.length > 0 ? (
+                users.map((user, index) => {
+                  const rank = index + 1;
+                  return (
+                    <TableRow
+                      key={user.id}
+                      className={`transition-all duration-200 border-b last:border-b-0 ${getRowStyle(rank)}`}
+                    >
+                      <TableCell className="py-4">{getRankDisplay(rank)}</TableCell>
+                      <TableCell className="py-4">
+                        <div className="space-y-1">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">{user.username}</div>
+                          <div className="text-sm flex items-center gap-1 text-gray-500 dark:text-gray-300">
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            {user.email}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right py-4">
-                      <Badge variant="outline" className="font-mono font-medium">{user.questionsSubmitted}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right py-4">
-                      <Badge variant="outline" className="font-mono font-medium">{user.answersReplied}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right py-4">
-                      <Badge variant="outline" className="font-mono font-medium">{user.answersAccepted}</Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <Badge variant="outline" className="font-mono font-medium">
+                          {user.questionsSubmitted}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <Badge variant="outline" className="font-mono font-medium">
+                          {user.answersReplied}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right py-4">
+                        <Badge variant="outline" className="font-mono font-medium">
+                          {user.answersAccepted}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                    No leaderboard data available.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

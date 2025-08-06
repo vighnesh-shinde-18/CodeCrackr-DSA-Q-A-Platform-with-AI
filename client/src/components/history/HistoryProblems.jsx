@@ -1,59 +1,75 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react";
+import axios from "axios";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle2 } from "lucide-react"
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2 } from "lucide-react";
+import debounce from "lodash.debounce";
+import { useNavigate } from "react-router-dom";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function HistoryProblems() {
-  const [problems, setProblems] = useState([])
-  const [topicFilter, setTopicFilter] = useState("All")
-  const [acceptedFilter, setAcceptedFilter] = useState("All")
+  const [problems, setProblems] = useState([]);
+  const [topicFilter, setTopicFilter] = useState("All");
+  const [acceptedFilter, setAcceptedFilter] = useState("All");
+
+  const navigate = useNavigate();
+
+  const fetchProblems = useCallback(async (topic, accepted) => {
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/problems/solved`,
+        {
+          topic,
+          accepted:
+            accepted === "All"
+              ? undefined
+              : accepted === "Accepted"
+              ? true
+              : false,
+        },
+        { withCredentials: true }
+      );
+      setProblems(response.data);
+    } catch (err) {
+      console.error("Failed to load solved problems:", err);
+    }
+  }, []);
+
+  const debouncedFetch = useMemo(() => debounce(fetchProblems, 300), [fetchProblems]);
 
   useEffect(() => {
-    const fetchProblems = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/problems/solved", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            topic: topicFilter,
-            accepted:
-              acceptedFilter === "All"
-                ? undefined
-                : acceptedFilter === "Accepted"
-                  ? true
-                  : false,
-          }),
-        })
+    debouncedFetch(topicFilter, acceptedFilter);
+  }, [topicFilter, acceptedFilter, debouncedFetch]);
 
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || "Failed to fetch problems")
+  const allTopics = useMemo(() => {
+    const topics = problems.flatMap((p) => p.topics);
+    return Array.from(new Set(topics));
+  }, [problems]);
 
-        setProblems(data)
-      } catch (err) {
-        console.error("Failed to load solved problems:", err)
-      }
-    }
+  const filtered = useMemo(
+    () =>
+      problems.map((p, index) => ({
+        ...p,
+        serialId: index + 1,
+      })),
+    [problems]
+  );
 
-    fetchProblems()
-  }, [topicFilter, acceptedFilter])
-
-
-  const allTopics = Array.from(new Set(problems.flatMap(p => p.topics)))
-  const filtered = problems.map((p, index) => ({
-    ...p,
-    serialId: index + 1,
-  }))
+  const handleNavigate = useCallback(
+    (id) => {
+      navigate(`/solve-problem/${id}`);
+    },
+    [navigate]
+  );
 
   return (
     <div className="space-y-4">
@@ -61,7 +77,7 @@ export function HistoryProblems() {
         <h3 className="text-lg font-medium">Replied Problems</h3>
 
         <div className="flex gap-4">
-          <Select defaultValue="All" onValueChange={setTopicFilter}>
+          <Select value={topicFilter} onValueChange={setTopicFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by Topic" />
             </SelectTrigger>
@@ -75,7 +91,7 @@ export function HistoryProblems() {
             </SelectContent>
           </Select>
 
-          <Select defaultValue="All" onValueChange={setAcceptedFilter}>
+          <Select value={acceptedFilter} onValueChange={setAcceptedFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by Status" />
             </SelectTrigger>
@@ -99,46 +115,43 @@ export function HistoryProblems() {
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
-       <TableBody>
-  {filtered.length > 0 ? (
-    filtered.map((p) => (
-      <TableRow
-        key={p.id}
-        onClick={() =>
-          window.location.href = `http://localhost:5173/solve-problem/${p.id}`
-        }
-        className="cursor-pointer hover:bg-muted transition-colors"
-      >
-        <TableCell>{p.serialId}</TableCell>
-        <TableCell>{p.title}</TableCell>
-        <TableCell>
-          <div className="flex flex-wrap gap-1">
-            {p.topics.map((t, i) => (
-              <Badge key={i} variant="secondary">{t}</Badge>
-            ))}
-          </div>
-        </TableCell>
-        <TableCell>
-          {p.accepted ? (
-            <div className="flex items-center gap-1 text-green-600 font-medium">
-              <CheckCircle2 className="size-4" /> Accepted
-            </div>
+        <TableBody>
+          {filtered.length > 0 ? (
+            filtered.map((p) => (
+              <TableRow
+                key={p.id}
+                onClick={() => handleNavigate(p.id)}
+                className="cursor-pointer hover:bg-muted transition-colors"
+              >
+                <TableCell>{p.serialId}</TableCell>
+                <TableCell>{p.title}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {p.topics.map((t, i) => (
+                      <Badge key={i} variant="secondary">{t}</Badge>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {p.accepted ? (
+                    <div className="flex items-center gap-1 text-green-600 font-medium">
+                      <CheckCircle2 className="size-4" /> Accepted
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Not Accepted</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
           ) : (
-            <span className="text-muted-foreground">Not Accepted</span>
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-8">
+                No problems found.
+              </TableCell>
+            </TableRow>
           )}
-        </TableCell>
-      </TableRow>
-    ))
-  ) : (
-    <TableRow>
-      <TableCell colSpan={4} className="text-center py-8">
-        No problems found.
-      </TableCell>
-    </TableRow>
-  )}
-</TableBody>
-
+        </TableBody>
       </Table>
     </div>
-  )
+  );
 }

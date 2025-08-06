@@ -1,19 +1,17 @@
-// app/problems/page.tsx
+import React, { useMemo } from "react";
+import { AppSidebar } from "@/components/sidebar/AppSidebar";
+import { SiteHeader } from "@/components/header/SiteHeader";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { ProblemTable } from "@/components/problem/ProblemTable";
 
-import React from "react"
-import { AppSidebar } from "@/components/sidebar/app-sidebar"
-import { SiteHeader } from "@/components/header/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ProblemTable } from "@/components/problem/problem-table"
+const ProblemsPage = () => {
+  const sidebarStyle = useMemo(() => ({
+    "--sidebar-width": "calc(var(--spacing) * 72)",
+    "--header-height": "calc(var(--spacing) * 12)",
+  }), []);
 
-export default function ProblemsPage() {
   return (
-    <SidebarProvider
-      style={{
-        "--sidebar-width": "calc(var(--spacing) * 72)",
-        "--header-height": "calc(var(--spacing) * 12)",
-      }}
-    >
+    <SidebarProvider style={sidebarStyle}>
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
@@ -23,5 +21,7 @@ export default function ProblemsPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
-}
+  );
+};
+
+export default React.memo(ProblemsPage);

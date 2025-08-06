@@ -197,4 +197,4 @@ const CodeEditor = ({ onRun }) => {
   );
 };
 
-export default CodeEditor;
+export default React.memo(CodeEditor);

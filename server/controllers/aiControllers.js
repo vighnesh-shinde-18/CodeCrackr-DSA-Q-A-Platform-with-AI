@@ -68,10 +68,6 @@ exports.processAIRequest = async (req, res, next) => {
     });
     await newInteraction.save();
 
-    await newInteraction.save();
-
-
-
     return res.status(201).json({
       success: true,
       message: 'AI response generated successfully',

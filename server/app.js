@@ -29,16 +29,13 @@ app.use(session({
   cookie: { secure: false }
 }));
  
-
-
-
-// Security middleware
+ 
 app.use(helmet());
 app.use(morgan("dev"));
 
  
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,  
   max: 100,
   message: "Too many requests from this IP, please try again later.",
 });

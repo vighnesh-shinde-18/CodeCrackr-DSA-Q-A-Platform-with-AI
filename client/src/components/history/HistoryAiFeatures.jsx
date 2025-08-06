@@ -1,61 +1,75 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react";
+import axios from "axios";
 import {
-  Table, TableHeader, TableBody, TableRow, TableHead, TableCell
-} from "@/components/ui/table"
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from "@/components/ui/table";
 import {
-  Select, SelectTrigger, SelectValue, SelectContent, SelectItem
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { MoreHorizontal } from "lucide-react"
+  Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { MoreHorizontal } from "lucide-react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle
-} from "@/components/ui/dialog"
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
-  DropdownMenuItem
-} from "@/components/ui/dropdown-menu"
-import AiResponseViewer from "../aiResponse/AiResponseViewer"
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import AiResponseViewer from "../aiResponse/AiResponseViewer";
+import debounce from "lodash.debounce";
+
+// Base API URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export function HistoryAiFeatures() {
-  const [history, setHistory] = useState([])
-  const [filter, setFilter] = useState("all")
-  const [viewDialog, setViewDialog] = useState(false)
-  const [selectedInteraction, setSelectedInteraction] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [history, setHistory] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const [viewDialog, setViewDialog] = useState(false);
+  const [selectedInteraction, setSelectedInteraction] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchInteractions(filter)
-  }, [filter])
+  // Mapping feature keys for flexibility
+  const featureMap = useMemo(() => ({
+    codeDebugging: "Debug",
+    codeReview: "Review",
+    codeGeneration: "Generate",
+    explainCode: "Explain",
+    convertCode: "Convert",
+    generateTestCases: "Testcases",
+  }), []);
 
-  const fetchInteractions = async (filterType = "all") => {
-    setLoading(true)
+  const reverseFeatureMap = useMemo(() => {
+    const entries = Object.entries(featureMap);
+    return Object.fromEntries(entries.map(([k, v]) => [v, k]));
+  }, [featureMap]);
+
+  const convertFeature = useCallback((key) => featureMap[key] || key, [featureMap]);
+  const mapFeature = useCallback((val) => reverseFeatureMap[val] || val, [reverseFeatureMap]);
+
+  // Debounced fetch
+  const fetchInteractions = useCallback(async (filterType = "all", signal) => {
+    setLoading(true);
     try {
-      let url = "http://localhost:5000/api/ai/interactions"
-      let options = {
-        method: "GET",
-        credentials: "include",
+      let response;
+      if (filterType === "all") {
+        response = await axios.get(`${BASE_URL}/api/ai/interactions`, {
+          withCredentials: true,
+          signal,
+        });
+      } else {
+        response = await axios.post(
+          `${BASE_URL}/api/ai/interactions/by-feature`,
+          { featureType: mapFeature(filterType) },
+          { withCredentials: true, signal }
+        );
       }
 
-      if (filterType !== "all") {
-        url = "http://localhost:5000/api/ai/interactions/by-feature"
-        options = {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ featureType: mapFeature(filterType) }),
-        }
-      }
-
-      const res = await fetch(url, options)
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.error || "Failed to fetch")
-
-      const formatted = result.data.map((item, idx) => ({
+      const formatted = response.data.data.map((item, idx) => ({
         _id: item._id,
         id: idx + 1,
         title: item.title || "Untitled",
@@ -64,93 +78,70 @@ export function HistoryAiFeatures() {
         prompt: item.userInput,
         response: item.aiResponse,
         date: new Date(item.createdAt).toLocaleDateString(),
-      }))
-      setHistory(formatted)
+      }));
+
+      setHistory(formatted);
     } catch (err) {
-      console.error("Fetch error:", err)
-      toast.error("Failed to load AI history")
+      if (!axios.isCancel(err)) {
+        toast.error("Failed to load AI history");
+      }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [mapFeature, convertFeature]);
 
-  const convertFeature = (key) => {
-    const map = {
-      codeDebugging: "Debug",
-      codeReview: "Review",
-      codeGeneration: "Generate",
-      explainCode: "Explain",
-      convertCode: "Convert",
-      generateTestCases: "Testcases",
-    }
-    return map[key] || key
-  }
+  const debouncedFetch = useMemo(() =>
+    debounce((filterType, signal) => fetchInteractions(filterType, signal), 300),
+    [fetchInteractions]
+  );
 
-  const mapFeature = (value) => {
-    const reverseMap = {
-      Debug: "codeDebugging",
-      Review: "codeReview",
-      Generate: "codeGeneration",
-      Explain: "explainCode",
-      Convert: "convertCode",
-      Testcases: "generateTestCases",
-    }
-    return reverseMap[value] || value
-  }
+  useEffect(() => {
+    const controller = new AbortController();
+    debouncedFetch(filter, controller.signal);
 
-  const handleView = async (id) => {
+    return () => controller.abort(); // cancel fetch if component unmounts
+  }, [filter, debouncedFetch]);
+
+  // View single interaction
+  const handleView = useCallback(async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/ai/interactions/${id}`, {
-        method: "GET",
-        credentials: "include",
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to fetch details")
-      setSelectedInteraction(data.data)
-      setViewDialog(true)
-    } catch (err) {
-      toast.error("Failed to load details")
+      const res = await axios.get(`${BASE_URL}/api/ai/interactions/${id}`, {
+        withCredentials: true,
+      });
+      setSelectedInteraction(res.data.data);
+      setViewDialog(true);
+    } catch {
+      toast.error("Failed to load details");
     }
-  }
+  }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/ai/interactions/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to delete")
-      toast.success("Deleted successfully")
-      fetchInteractions(filter)
-    } catch (err) {
-      toast.error("Delete failed")
+      await axios.delete(`${BASE_URL}/api/ai/interactions/${id}`, {
+        withCredentials: true,
+      });
+      toast.success("Deleted successfully");
+      fetchInteractions(filter);
+    } catch {
+      toast.error("Delete failed");
     }
-  }
+  }, [fetchInteractions, filter]);
 
-  const handleDeleteAll = async () => {
+  const handleDeleteAll = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/ai/interaction`, {
-        method: "DELETE",
-        credentials: "include",
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to delete all")
-      toast.success("All history cleared")
-      fetchInteractions(filter)
-    } catch (err) {
-      toast.error("Failed to delete all")
+      await axios.delete(`${BASE_URL}/api/ai/interaction`, {
+        withCredentials: true,
+      });
+      toast.success("All history cleared");
+      fetchInteractions(filter);
+    } catch {
+      toast.error("Failed to delete all");
     }
-  }
+  }, [fetchInteractions, filter]);
 
-  const featuresList = [
-    { label: "Debug", value: "Debug" },
-    { label: "Review", value: "Review" },
-    { label: "Generate", value: "Generate" },
-    { label: "Explain", value: "Explain" },
-    { label: "Convert", value: "Convert" },
-    { label: "Testcases", value: "Testcases" },
-  ]
+  const featuresList = useMemo(() => [
+    "Debug", "Review", "Generate", "Explain", "Convert", "Testcases"
+  ], []);
 
   return (
     <div className="space-y-4">
@@ -164,9 +155,7 @@ export function HistoryAiFeatures() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               {featuresList.map((f) => (
-                <SelectItem key={f.value} value={f.value}>
-                  {f.label}
-                </SelectItem>
+                <SelectItem key={f} value={f}>{f}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -190,12 +179,10 @@ export function HistoryAiFeatures() {
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
-                Loading...
-              </TableCell>
+              <TableCell colSpan={6} className="text-center py-8">Loading...</TableCell>
             </TableRow>
-          ) : history.length ? (
-            history.map(f => (
+          ) : history.length > 0 ? (
+            history.map((f) => (
               <TableRow key={f._id}>
                 <TableCell>{f.id}</TableCell>
                 <TableCell><Badge variant="outline">{f.feature}</Badge></TableCell>
@@ -223,15 +210,13 @@ export function HistoryAiFeatures() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
-                No AI feature usage found.
-              </TableCell>
+              <TableCell colSpan={6} className="text-center py-8">No AI feature usage found.</TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
 
-      {/* 🔍 View Dialog */}
+      {/* View Dialog */}
       <Dialog open={viewDialog} onOpenChange={setViewDialog}>
         <DialogContent className="min-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -241,23 +226,14 @@ export function HistoryAiFeatures() {
           </DialogHeader>
 
           <div className="space-y-4 mt-4 text-sm">
-            <div>
-              <strong>Feature:</strong>{" "}
-              {convertFeature(selectedInteraction?.featureType)}
-            </div>
-            <div>
-              <strong>Date:</strong>{" "}
-              {new Date(selectedInteraction?.createdAt).toLocaleString()}
-            </div>
+            <div><strong>Feature:</strong> {convertFeature(selectedInteraction?.featureType)}</div>
+            <div><strong>Date:</strong> {new Date(selectedInteraction?.createdAt).toLocaleString()}</div>
             <div>
               <strong>Prompt:</strong>
               <div className="mt-1 bg-muted p-3 rounded overflow-auto max-h-60 whitespace-pre-wrap break-words text-sm">
-                <pre className="whitespace-pre-wrap">
-                  {selectedInteraction?.userInput}
-                </pre>
+                <pre className="whitespace-pre-wrap">{selectedInteraction?.userInput}</pre>
               </div>
             </div>
-
             <AiResponseViewer
               response={selectedInteraction?.aiOutput}
               featureType={convertFeature(selectedInteraction?.featureType)}
@@ -267,5 +243,5 @@ export function HistoryAiFeatures() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

@@ -17,10 +17,9 @@ const returnUserProfileInfo = async (req, res, next) => {
 
 const getAllUserStats = async (req, res) => {
   try {
-    console.log(1)
+    
     const users = await User.find().lean();
-    console.log(2)
-
+    
     const stats = await Promise.all(
       users.map(async (user) => {
         const totalQuestionsPosted = await Problem.countDocuments({ user: user._id });
@@ -39,9 +38,7 @@ const getAllUserStats = async (req, res) => {
           totalAcceptedAnswers,
         };
       })
-    );
-    console.log(3)
-
+    ); 
     res.status(200).json(stats);
   } catch (error) {
     console.error("Error fetching user stats:", error);

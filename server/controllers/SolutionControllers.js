@@ -337,32 +337,33 @@ const replyToSolution = async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 };
-
-
-
+ 
 
 const deleteSolution = async (req, res) => {
   try {
     const userId = req.user.id;
     const solutionId = req.params.id;
 
-    console.log(req.user);
-
     const solution = await Solution.findById(solutionId);
     if (!solution) {
       return res.status(404).json({ error: "Solution not found." });
     }
-
  
-
+    if (solution.user.toString() !== userId) {
+      return res.status(403).json({ error: "Unauthorized" });
+    }
+ 
+    await Reply.deleteMany({ solution:solutionId });
+ 
     await solution.deleteOne();
 
-    res.status(200).json({ message: "Solution deleted successfully." });
+    res.status(200).json({ message: "Solution and its replies deleted successfully." });
   } catch (error) {
     console.error("Error deleting solution:", error);
     res.status(500).json({ error: "Server Error" });
   }
 };
+
 
 
 module.exports = {

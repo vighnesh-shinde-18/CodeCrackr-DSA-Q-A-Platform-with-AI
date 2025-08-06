@@ -1,41 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import axios from "axios";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import RegisterForm from "../components/ui/register-form";
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const REGISTER_USER_URL = `${BASE_URL}/api/auth/register`;
-  const navigate = useNavigate();
 
-  const handleRegister = async ({ email, username, password }) => {
-    setLoading(true);
+  const handleRegister = useCallback(
+    async ({ email, username, password }) => {
+      setLoading(true);
 
-    try {
-      const res = await fetch(REGISTER_USER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, username, password }),
-      });
+      try {
+        const res = await axios.post(
+          REGISTER_USER_URL,
+          { email, username, password },
+          { withCredentials: true }
+        );
 
-      if (res.status === 201) {
-        toast.success(" Registration successful! Redirecting to login...");
-        setTimeout(() => {
-          navigate("/login");
-        }, 2500);
-      } else if (res.status === 409) {
-        toast.error("User already exists.");
-      } else {
-        toast.error("Registration failed. Please try again.");
+        if (res.status === 201) {
+          toast.success("Registration successful! Redirecting to login...");
+          setTimeout(() => navigate("/login"), 2500);
+        }
+      } catch (err) {
+        const status = err?.response?.status;
+        if (status === 409) {
+          toast.error("User already exists.");
+        } else {
+          toast.error("Registration failed. Please try again.");
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      toast.error("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [navigate, REGISTER_USER_URL]
+  );
 
   return (
     <section className="min-h-screen flex items-center justify-center px-4 py-10 bg-background">
@@ -44,4 +46,4 @@ const RegisterPage = () => {
   );
 };
 
-export default RegisterPage;
+export default React.memo(RegisterPage);

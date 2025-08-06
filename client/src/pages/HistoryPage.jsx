@@ -1,19 +1,19 @@
-// src/pages/HistoryPage.jsx
-import { AppSidebar } from "@/components/sidebar/app-sidebar"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { SiteHeader } from "@/components/header/site-header"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { HistoryProblems } from "@/components/history/HistoryProblems"
-import { HistoryAiFeatures } from "@/components/history/HistoryAiFeatures"
+import React, { useMemo } from "react";
+import { AppSidebar } from "@/components/sidebar/AppSidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SiteHeader } from "@/components/header/SiteHeader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HistoryProblems } from "@/components/history/HistoryProblems";
+import { HistoryAiFeatures } from "@/components/history/HistoryAiFeatures";
 
-export default function HistoryPage() {
+const HistoryPage = () => {
+  const sidebarStyle = useMemo(() => ({
+    "--sidebar-width": "calc(var(--spacing) * 72)",
+    "--header-height": "calc(var(--spacing) * 12)",
+  }), []);
+
   return (
-    <SidebarProvider
-      style={{
-        "--sidebar-width": "calc(var(--spacing) * 72)",
-        "--header-height": "calc(var(--spacing) * 12)",
-      }}
-    >
+    <SidebarProvider style={sidebarStyle}>
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
@@ -35,5 +35,7 @@ export default function HistoryPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
-}
+  );
+};
+
+export default React.memo(HistoryPage);

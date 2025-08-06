@@ -1,28 +1,30 @@
-"use client"
+"use client";
 
-import { useLocation } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import React, { useMemo } from "react";
+import { useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
-// Utility: Map routes to readable page titles
-const pageTitles = {
+// 🚀 Static page title map (outside component for stability)
+const PAGE_TITLES = {
   "/dashboard": "Dashboard",
   "/problems": "Problems",
   "/history": "History",
-  "/debug": "AI Feature ",
-  "/generate": "AI Feature ",
-  "/review": "AI Feature ",
-  "/explain": "AI Feature ",
-  "/convert": "AI Feature ",
-  "/testcases": "AI Feature "
-}
+  "/debug": "AI Feature",
+  "/generate": "AI Feature",
+  "/review": "AI Feature",
+  "/explain": "AI Feature",
+  "/convert": "AI Feature",
+  "/testcases": "AI Feature",
+};
 
-export function SiteHeader() {
-  const location = useLocation()
+function SiteHeaderComponenet() {
+  const location = useLocation();
 
-  // Get the pathname and fallback to "CodeKracker" if unknown
-  const pageTitle = pageTitles[location.pathname] || "CodeKracker"
+  const pageTitle = useMemo(() => {
+    return PAGE_TITLES[location.pathname] || "CodeKracker";
+  }, [location.pathname]);
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -44,5 +46,9 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-  )
+  );
 }
+
+export const SiteHeader = React.memo(SiteHeaderComponenet, (prevProps, nextProps) => {
+  return true;
+});

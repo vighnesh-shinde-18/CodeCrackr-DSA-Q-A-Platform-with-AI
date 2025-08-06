@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
-export default function ResetPasswordPage() {
+const ResetPasswordPage = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -15,33 +16,40 @@ export default function ResetPasswordPage() {
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const RESET_PASSWORD_URL = `${BASE_URL}/api/auth/reset-password`;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setLoading(true);
 
-    try {
-      const res = await fetch(RESET_PASSWORD_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, newPassword }),
-      });
+      try {
+        const res = await axios.post(
+          RESET_PASSWORD_URL,
+          { email, otp, newPassword },
+          { withCredentials: true }
+        );
 
-      if (res.status === 200) {
-        toast.success("Password reset successful. Login now.");
-        navigate("/login");
-      } else {
-        toast.error("Invalid OTP or email.");
+        if (res.status === 200) {
+          toast.success("Password reset successful. Login now.");
+          navigate("/login");
+        }
+      } catch (err) {
+        const message =
+          err?.response?.data?.message ||
+          "Invalid OTP or email. Please try again.";
+        toast.error(message);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      toast.error("Error resetting password.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [email, otp, newPassword, RESET_PASSWORD_URL, navigate]
+  );
 
   return (
     <section className="min-h-screen flex items-center justify-center px-4 py-10 bg-background">
-      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6 border p-6 rounded-md shadow">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-md space-y-6 border p-6 rounded-md shadow"
+      >
         <h2 className="text-xl font-bold text-center">Reset Your Password</h2>
 
         <div className="grid gap-3">
@@ -83,4 +91,6 @@ export default function ResetPasswordPage() {
       </form>
     </section>
   );
-}
+};
+
+export default React.memo(ResetPasswordPage);

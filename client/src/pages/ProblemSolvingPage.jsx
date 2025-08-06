@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import axios from "axios";
 
 import ProblemDetails from "@/components/problem/ProblemDetails";
 import SolutionReplies from "@/components/solution/SolutionReplies";
 import SolutionInput from "@/components/solution/SolutionInput";
-import { SiteHeader } from "@/components/header/site-header";
+import { SiteHeader } from "@/components/header/SiteHeader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function ProblemSolvingPage() {
   const { id } = useParams(); // Get problem ID from route
@@ -20,33 +23,29 @@ export default function ProblemSolvingPage() {
   const [filterStatus, setFilterStatus] = useState("all");
 
   const [selectedSolutionId, setSelectedSolutionId] = useState(null);
+
   // 🔹 Fetch logged-in user
   const fetchCurrentUser = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/user/profile", {
-        credentials: "include",
+      const { data } = await axios.get(`${BASE_URL}/api/user/profile`, {
+        withCredentials: true,
       });
-      const data = await res.json();
-      if (res.ok) {
-        setCurrentUser(data.data)
-      } else {
-        throw new Error("User not authenticated");
-      }
+      setCurrentUser(data.data);
     } catch (err) {
       console.error("Error fetching user:", err);
-      setCurrentUser(""); // Fallback
+      setCurrentUser("");
     }
   };
 
-  // 🔹 Fetch problem & replies
+  // 🔹 Fetch solutions for a given problem
   const fetchSolutions = async (problemId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/solutions/problem/${problemId}`, {
-        credentials: "include",
-        method: "GET"
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to load replies");
+      const { data } = await axios.get(
+        `${BASE_URL}/api/solutions/problem/${problemId}`,
+        {
+          withCredentials: true,
+        }
+      );
       setAllSolutions(data);
     } catch (err) {
       console.error("Error fetching replies:", err);
@@ -54,21 +53,19 @@ export default function ProblemSolvingPage() {
     }
   };
 
-  // ✅ 2. Move fetchProblem to top too, and call fetchReplies inside
+  // 🔹 Fetch the problem
   const fetchProblem = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/problems/${id}`, {
-        credentials: "include",
+      const { data } = await axios.get(`${BASE_URL}/api/problems/${id}`, {
+        withCredentials: true,
       });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Failed to load problem");
-
       setProblem(data);
-      fetchSolutions(data.id); // Use .id or ._id as per your backend response
+      fetchSolutions(data.id); // Make sure `data.id` is correct field
     } catch (err) {
-      console.error(err);
-      setError(err.message);
+      console.error("Error fetching problem:", err);
+      setError(
+        err?.response?.data?.error || "Failed to load problem. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -80,16 +77,18 @@ export default function ProblemSolvingPage() {
     fetchProblem();
   }, [id]);
 
-  // Sync selectedReply with updated allReplies
+  // Sync selected reply with updated replies
   useEffect(() => {
     if (selectedSolution) {
-      const updatedSolutions = allSolutions.find((r) => r._id === selectedReply._id || r.id === selectedReply.id);
-      if (updatedSolutions) {
-        setSelectedSolution(updatedSolutions);
+      const updated = allSolutions.find(
+        (r) =>
+          r._id === selectedSolution._id || r.id === selectedSolution.id
+      );
+      if (updated) {
+        setSelectedSolution(updated);
       }
     }
   }, [allSolutions]);
-
 
   // 🔹 Accept Reply Handler
   const handleAcceptSolution = (solutionIndex) => {
@@ -99,10 +98,8 @@ export default function ProblemSolvingPage() {
     }));
     setAllSolutions(updatedSolutions);
     setSelectedSolution(updatedSolutions[solutionIndex]);
-    alert("Marked this solution as Accepted");
+
   };
-
-
 
   // 🔹 View/Reset Handler
   const handleViewSolution = (solution) => {
@@ -146,7 +143,7 @@ export default function ProblemSolvingPage() {
                     <option value="not_accepted">Not Accepted</option>
                     <option value="mine">Submitted by Me</option>
                   </select>
-                </div> 
+                </div>
                 <SolutionReplies
                   allSolutions={allSolutions}
                   onViewSolution={handleViewSolution}
@@ -173,7 +170,6 @@ export default function ProblemSolvingPage() {
                   </button>
                 )}
               </div>
-              {console.log(problem)}  
               <SolutionInput
                 showEditor={showEditor}
                 selectedSolution={selectedSolution}
@@ -183,7 +179,6 @@ export default function ProblemSolvingPage() {
                 fetchSolutions={fetchSolutions}
                 problemId={problem.id}
               />
-
             </div>
           </div>
         </div>

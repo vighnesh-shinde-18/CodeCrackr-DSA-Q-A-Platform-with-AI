@@ -1,5 +1,6 @@
-import { IconLogout, IconDotsVertical } from "@tabler/icons-react";
-
+import { useState, useEffect, useCallback, memo } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Avatar,
   AvatarFallback,
@@ -13,62 +14,54 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuButton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { IconLogout, IconDotsVertical } from "@tabler/icons-react";
+import { toast } from "sonner";
 
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-
-export function NavUser() {
+const NavUserComponent = () => {
   const { isMobile } = useSidebar();
   const navigate = useNavigate();
   const [user, setUser] = useState({});
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userRes = await fetch("http://localhost:5000/api/user/profile", {
-          credentials: "include",
+        const res = await axios.get(`${BASE_URL}/api/user/profile`, {
+          withCredentials: true,
         });
-        const userData = await userRes.json();
+
+        const userData = res.data.data;
         setUser({
-          email: userData.data.email,
-          username: userData.data.username,
+          email: userData.email,
+          username: userData.username,
+          avatar: userData.avatar || "",
         });
       } catch (error) {
         console.error("Failed to fetch user profile", error);
+        toast.error("Failed to load user");
       }
     };
 
     fetchData();
-  }, []);
+  }, [BASE_URL]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
-      const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-      const LOGOUT_URL = `${BASE_URL}/api/auth/logout`;
-
-      const res = await fetch(LOGOUT_URL, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        setUser({});
-        navigate("/login");
-      } else {
-        console.error("Logout failed");
-      }
+      await axios.post(`${BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
+      setUser({});
+      toast.success("Logged out");
+      navigate("/login");
     } catch (err) {
       console.error("Error logging out:", err);
+      toast.error("Logout failed");
     }
-  };
+  }, [BASE_URL, navigate]);
 
-  const initials = user.username
-    ? user.username.slice(0, 2).toUpperCase()
-    : "CK";
+  const initials = user.username ? user.username.slice(0, 2).toUpperCase() : "US";
 
   return (
     <SidebarMenu>
@@ -78,13 +71,12 @@ export function NavUser() {
             <AvatarImage src={user.avatar} alt={user.username || "User"} />
             <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
           </Avatar>
-          <div className="grid flex-1 text-left text-sm leading-tight">
+          <div className="grid flex-1 text-left text-sm leading-tight ml-3">
             <span className="truncate font-medium">{user.username || "Unknown"}</span>
             <span className="text-muted-foreground truncate text-xs">{user.email || ""}</span>
           </div>
         </SidebarMenuButton>
 
-        {/* Three Dots Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="p-2 hover:bg-muted rounded-md transition">
@@ -102,4 +94,6 @@ export function NavUser() {
       </SidebarMenuItem>
     </SidebarMenu>
   );
-}
+};
+
+export const NavUser = memo(NavUserComponent); // ✅ named export
