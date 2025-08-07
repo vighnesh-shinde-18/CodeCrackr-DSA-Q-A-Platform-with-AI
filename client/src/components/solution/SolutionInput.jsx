@@ -38,6 +38,7 @@ export default function SolutionInput({
   fetchSolutions,
   problemId,
 }) {
+  
   const theme = useMonacoTheme();
   const [code, setCode] = useState("// Write your solution...");
   const [explanation, setExplanation] = useState("");
@@ -79,7 +80,7 @@ export default function SolutionInput({
         problemId, code, explanation, language,
       }, { withCredentials: true });
 
-      toast.success("✅ Solution submitted successfully!");
+      toast.success("Solution submitted successfully!");
       handleAcceptSolution();
       fetchSolutions(problemId);
     } catch (err) {
@@ -89,7 +90,7 @@ export default function SolutionInput({
 
   const handlePostReply = useCallback(async () => {
     if (!replyText.trim()) {
-      toast.warning("⚠️ Please enter your reply.");
+      toast.warning("Please enter your reply.");
       return;
     }
 
@@ -133,8 +134,9 @@ export default function SolutionInput({
         {},
         { withCredentials: true }
       );
-      fetchSolutions();
+      fetchSolutions(problemId);
       toast.success("Marked as accepted.");
+      
     } catch (err) {
       toast.error(err?.response?.data?.error || "Accept failed.");
     }

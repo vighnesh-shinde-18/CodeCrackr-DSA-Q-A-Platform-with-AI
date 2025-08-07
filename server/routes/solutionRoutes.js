@@ -27,7 +27,7 @@ router.post("/", authMiddleware, submitSolution);
  
 router.get("/user-solutions", authMiddleware, getUserSolutions);
  
-router.patch("/accept/:id", authMiddleware, markSolutionAsAccepted);
+router.patch("/mark-accepted/:id", authMiddleware, markSolutionAsAccepted);
  
 router.patch("/like/:id", authMiddleware, toggleLikeSolution);
  

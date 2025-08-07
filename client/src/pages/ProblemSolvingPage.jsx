@@ -38,10 +38,10 @@ export default function ProblemSolvingPage() {
   };
 
   // 🔹 Fetch solutions for a given problem
-  const fetchSolutions = async (problemId) => {
-    try {
+  const fetchSolutions = async (id) => {
+    try { 
       const { data } = await axios.get(
-        `${BASE_URL}/api/solutions/problem/${problemId}`,
+        `${BASE_URL}/api/solutions/problem/${id}`,
         {
           withCredentials: true,
         }
@@ -177,7 +177,7 @@ export default function ProblemSolvingPage() {
                 isUploader={currentUser._id === problem.userId}
                 handleAcceptSolution={handleAcceptSolution}
                 fetchSolutions={fetchSolutions}
-                problemId={problem.id}
+                problemId={id}
               />
             </div>
           </div>
