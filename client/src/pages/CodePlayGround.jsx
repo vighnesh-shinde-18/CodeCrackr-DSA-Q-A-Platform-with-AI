@@ -126,12 +126,12 @@ const CodePlayGround = () => {
           </div>
 
           {/* Output */}
-          <div>
+        {output &&  <div>
             <label className="block font-medium mt-4">Output:</label>
             <pre className="border p-2 rounded bg-white dark:bg-black whitespace-pre-wrap">
               {output}
             </pre>
-          </div>
+          </div>}
         </div>
       </SidebarInset>
     </SidebarProvider>
