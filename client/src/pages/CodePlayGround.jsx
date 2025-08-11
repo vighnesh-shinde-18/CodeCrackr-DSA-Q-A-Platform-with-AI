@@ -10,21 +10,23 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Available languages: backend value + Monaco editor value
+
 const LANGUAGES = [
-  { value: "cpp", label: "C++", monaco: "cpp" },
-  { value: "c", label: "C", monaco: "c" },
-  { value: "python", label: "Python", monaco: "python" },
-  { value: "java", label: "Java", monaco: "java" },
-  { value: "javascript", label: "JavaScript", monaco: "javascript" },
-  { value: "typescript", label: "TypeScript", monaco: "typescript" },
+  { value: "cpp-gcc-14", label: "C++", monaco: "cpp" },
+  { value: "c-gcc-14", label: "C", monaco: "c" },
+  { value: "python-3.13", label: "Python", monaco: "python" },
+  { value: "java-17", label: "Java", monaco: "java" },
+  { value: "javascript-22", label: "JavaScript", monaco: "javascript" },
+  { value: "typescript-5.6", label: "TypeScript", monaco: "typescript" },
   { value: "csharp", label: "C#", monaco: "csharp" },
-  { value: "go", label: "Go", monaco: "go" },
-  { value: "php", label: "PHP", monaco: "php" },
+  { value: "go-1.23", label: "Go", monaco: "go" },
+  { value: "php-8", label: "PHP", monaco: "php" },
   { value: "ruby", label: "Ruby", monaco: "ruby" },
   { value: "swift", label: "Swift", monaco: "swift" },
-  { value: "rust", label: "Rust", monaco: "rust" },
+  { value: "rust-1.85", label: "Rust", monaco: "rust" },
   { value: "sql", label: "SQL", monaco: "sql" },
 ];
+
 
 const CodePlayGround = () => {
   const [language, setLanguage] = useState("cpp");
