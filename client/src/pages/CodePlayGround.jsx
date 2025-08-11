@@ -113,6 +113,7 @@ const [language, setLanguage] = useState(LANGUAGES[0].value);
               onChange={(e) => setInput(e.target.value)}
               className="border p-2 rounded w-full h-20 font-mono"
               placeholder="Enter input if required..."
+              a
             />
           </div>
 
