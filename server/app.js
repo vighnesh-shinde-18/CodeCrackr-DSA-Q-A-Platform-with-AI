@@ -12,7 +12,7 @@ const userRoutes = require("./routes/userRoutes");
 const interactionRoutes = require("./routes/interactionRoutes");
 const problemRoutes = require("./routes/problemRoutes");
 const solutionRoutes = require("./routes/solutionRoutes");
-const compilerRoutes = require("./routes/compilerRoutes")
+const compilerRoutes = require("./routes/compilerRoutes")a
 
 const db = require("./config/db");
 
@@ -71,8 +71,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/ai/interactions", interactionRoutes);
 app.use("/api/problems",authMiddleware,problemRoutes);
 app.use("/api/solutions",authMiddleware,solutionRoutes);
-// app.use("/api/playground",authMiddleware, compilerRoutes);
-app.use("/api/playground", compilerRoutes);
+app.use("/api/playground",authMiddleware, compilerRoutes);
 
 
 
