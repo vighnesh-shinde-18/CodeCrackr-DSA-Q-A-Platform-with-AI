@@ -37,7 +37,7 @@
  ## Resume Readiness
   - Short project description (what it does, why it’s useful).
   - Tech stack list (React, Node.js, etc.).
-  - Screenshots or demo GIFs.
+  -     Screenshots or demo GIFs.
   - Live demo link + GitHub repo link.
 
  
