@@ -23,7 +23,7 @@ const LANGUAGES = [
   { value: "ruby", label: "Ruby", monaco: "ruby" },
   { value: "swift", label: "Swift", monaco: "swift" },
   { value: "rust", label: "Rust", monaco: "rust" },
-  { value: "kotlin", label: "Kotlin", monaco: "kotlin" },
+  { value: "sql", label: "SQL", monaco: "sql" },
 ];
 
 const CodePlayGround = () => {
