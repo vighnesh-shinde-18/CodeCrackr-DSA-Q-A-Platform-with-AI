@@ -1,7 +1,8 @@
-# 💻 AI-Powered DSA Assistant
+# 💻 CodeCrackr – AI-Powered DSA Q&A Platform 
 
-A full-stack web application that helps users solve DSA (Data Structures & Algorithms) problems using AI. Features include **code debugging**, **generation**, **explanation**, **optimization**, **test case generation**, **review**, and more — powered by Hugging Face and Gemini APIs.
-
+A full-stack collaborative platform for solving Data Structures & Algorithms problems with Code Compilations.
+Users can ask questions, answer with code, run solutions in a built-in compiler, and leverage AI tools for **debugging**, **review**, **refactoring**,** test case generation**, and **code explanations**.
+Includes **leaderboards**, **user history**, and **profile tracking**.
 ---
 
 ## 📂 Project Structure
@@ -15,16 +16,42 @@ A full-stack web application that helps users solve DSA (Data Structures & Algor
 
 ## 🚀 Features
 
-- ✨ Modern UI with **ShadCN UI** and **Monaco Editor**
-- 🔒 Authentication using JWT + Cookies
-- 🤖 AI Features: Debug, Generate, Explain, Optimize, Test Case Generator, Review
-- 🧠 Gemini + Hugging Face APIs for smart coding assistance
-- 💬 Chat-like interface with structured responses
-- 📜 History: View previous conversations
-- 🌙 Dark/Light theme toggle
-- 👥 User profile support
-- 📱 Mobile responsive
+- ✨**Q&A Platform**
+  - Post questions with Problem Title, Descritpion and Test Cases
+  - Answer and accept best solutions 
+  - View & manage your questions and answers\
+    
+- 👨🏻‍💻 **Built-in Compiler**
+  - Supports multiple programming languages (C, C++, Java, Python, JavaScript, etc.)
+  - Real-time code execution 
+    
+- 🔒 **Authentication using JWT + Cookies**
+  - JWT + cookie-based login
+  - Registration & password reset
+  
+- 🤖 **AI Tool**
+  - Code Debugging
+  - Code generation
+  - Explanation
+  - Optimization
+  - Test case generation
+  - Review & refactor suggestions
+    
+- 💬 **User & Community Features**
+    - Leaderboard based on answers & accepted solutions
+    - User profile with stats (questions, answers, AI tool usage)
 
+  
+- 📜 **History**
+    - History of AI interactions 
+    - History uploaded questions
+    - History of Answered Questions
+      
+- 📱 **UI**
+    - Modern responsive design (ShadCN UI + Tailwind)
+    - Monaco Editor integration
+    - Dark/Light theme toggle
+      
 ---
 
 ## 🛠️ Tech Stack
@@ -39,7 +66,7 @@ A full-stack web application that helps users solve DSA (Data Structures & Algor
 
 ### 🔹 Backend
 - Node.js + Express
-- MongoDB (Mongoose)
+- MongoDB + Mongoose
 - JWT + Cookie-Parser
 - Google Gemini API
 - Helmet, CORS, Express-rate-limit
@@ -72,10 +99,17 @@ cd client
 npm install
 ```
 
+Create a `.env` file inside `/frontend `:
+
+```env
+VITE_API_BASE_URL = your_vite_api_base_url
+```
+
 Start frontend dev server:
 ```bash
 npm run dev
 ```
+
 
 ---
 
@@ -95,9 +129,11 @@ SALT = 5
 JWT_SECRET = your_secret_key
 PORT = 5000
 GEMINI_API_KEY = your_gemini_api_key
-FRONTEND_URL = your_frontend_url
+FRONTEND_URL = http://localhost:5173
 EMAIL_USER= your_email_id
 EMAIL_PASS= your_email_pass
+JUDGE0_API=https://judge0-ce.p.rapidapi.com
+JUDGE0_KEY= your-judge0-api-key
 ```
 
 Create a `.env` file inside `/backend`:
@@ -137,44 +173,6 @@ Make sure both servers are running simultaneously.
 - Protected routes require token in cookies (`httpOnly`)
 - Mobile users must have cookies enabled to access secured APIs
 
----
-
-## ✅ Checklist Before Moving to Next Project
-
-| Task | Status |
-|------|--------|
-| ✅ Complete frontend pages (Feature, History, Profile, etc.) | ✔️ |
-| ✅ Finalized backend APIs (auth, AI routes, history) | ✔️ |
-| ✅ Cookies-based auth with mobile support | ✔️ |
-| ✅ Token sending and reading correctly (CORS + credentials) | ✔️ |
-| ✅ Responsive UI tested on mobile and desktop | ✔️ |
-| ✅ Final `.env` setup | ✔️ |
-| ✅ Code cleanup and comments | ✔️ |
-| ✅ README.md complete | ✔️ |
-| ✅ Deployment-ready (optional) | 🚧 (next step) |
-
----
-
-## 📦 Future Improvements
-
-- ✅ Add OAuth (Google Sign-In)
-- ✅ Rate-limiting per user
-- ✅ Save and load favorite prompts
-- ✅ Shareable public links of solutions
-- ✅ In-browser code execution sandbox
-
----
-
-## 🧪 Testing
-
-- Manual test across devices (mobile & desktop)
-- Check for:
-  - Auth issues (esp. mobile cookies)
-  - CORS errors
-  - AI API rate limits
-  - Broken UI on smaller screens
-
----
 
 ## 📄 License
 
