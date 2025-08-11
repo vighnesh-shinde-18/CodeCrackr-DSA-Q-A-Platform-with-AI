@@ -70,6 +70,7 @@ function AppSidebarComponent(props) {
       { title: "Problems", url: "/problems", icon: IconListCheck },
       { title: "Problem Manager", url: "/problem-manager", icon: IconUpload },
       { title: "History", url: "/history", icon: IconHistory },
+      { title: "Code Playground", url: "/code-playground", icon: IconFileCode },
     ],
     []
   )

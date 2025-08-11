@@ -96,4 +96,4 @@ const NavUserComponent = () => {
   );
 };
 
-export const NavUser = memo(NavUserComponent); // ✅ named export
+export const NavUser = memo(NavUserComponent, ); // ✅ named export

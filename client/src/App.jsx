@@ -18,6 +18,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ProblemSolvingPage from "./pages/ProblemSolvingPage";
 import ProblemManagerPage from "./pages/ProblemManagerPage";
+import CodePlayGround from "./pages/CodePlayGround";
 
 const AppRoutes = memo(() => (
   <Routes>
@@ -27,7 +28,7 @@ const AppRoutes = memo(() => (
     <Route path="/dashboard" element={<Dashboard />} />
     <Route path="/problems" element={<ProblemsPage />} />
     <Route path="/history" element={<HistoryPage />} />
-
+<Route path="/code-playground" element={<CodePlayGround />} />
     {/* AI Features */}
     <Route path="/debug" element={<AIFeaturePage featureName="codeDebugging" />} />
     <Route path="/review" element={<AIFeaturePage featureName="codeReview" />} />
