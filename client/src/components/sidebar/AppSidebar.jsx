@@ -35,35 +35,9 @@ import {
 import axios from "axios"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 function AppSidebarComponent(props) {
-  const [userData, setUserData] = useState({
-    username: "",
-    email: "",
-    avatar: "/avatars/shadcn.jpg",
-  })
-
-  const fetchProfile = useCallback(async () => {
-    try {
-      const res = await axios.get(`${BASE_URL}/api/user/profile`, {
-        withCredentials: true,
-      })
-
-      setUserData((prev) => ({
-        ...prev,
-        username: res.data.username,
-        email: res.data.email,
-      }))
-    } catch (err) {
-      console.error("Error fetching user profile:", err)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
-
+ 
   const mainNav = useMemo(
     () => [
       { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
@@ -108,7 +82,7 @@ function AppSidebarComponent(props) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={userData} />
+        <NavUser/>
       </SidebarFooter>
     </Sidebar>
   )
