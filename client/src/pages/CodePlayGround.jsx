@@ -29,7 +29,7 @@ const LANGUAGES = [
 
 
 const CodePlayGround = () => {
-  const [language, setLanguage] = useState("cpp");
+const [language, setLanguage] = useState(LANGUAGES[0].value);
   const [sourceCode, setSourceCode] = useState("// Write your code here...");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
