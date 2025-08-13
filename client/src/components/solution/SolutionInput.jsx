@@ -151,10 +151,10 @@ export default function SolutionInput({
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
-          className="border px-2 py-1 rounded text-sm"
-        >
+          className="border px-2 py-1 rounded bg-white text-black dark:bg-zinc-800 dark:text-white text-sm"
+        > 
           {languageOptions.map((lang) => (
-            <option key={lang} value={lang}>{lang.toUpperCase()}</option>
+            <option key={lang} className="bg-white text-black dark:bg-zinc-800 dark:text-white" value={lang}>{lang.toUpperCase()}</option>
           ))}
         </select>
       </div>

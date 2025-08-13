@@ -12,8 +12,7 @@ const userRoutes = require("./routes/userRoutes");
 const interactionRoutes = require("./routes/interactionRoutes");
 const problemRoutes = require("./routes/problemRoutes");
 const solutionRoutes = require("./routes/solutionRoutes");
-const compilerRoutes = require("./routes/compilerRoutes")a
-
+const compilerRoutes = require("./routes/compilerRoutes");
 const db = require("./config/db");
 
 dotenv.config();
