@@ -43,14 +43,23 @@ const [language, setLanguage] = useState(LANGUAGES[0].value);
     []
   );
 
-  const runCode = async () => {
+    const runCode = async () => {
     try {
       setLoading(true);
-      const res = await axios.post(`${BASE_URL}/api/playground/run`, {
-        language,
-        sourceCode,
-        input,
-      });
+      const res = await axios.post(
+        `${BASE_URL}/api/playground/run`,
+        {
+          language,
+          sourceCode,
+          input,
+        },
+        {
+          withCredentials: true, // 👈 include cookies in request
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       setOutput(res.data.error ? res.data.error : res.data.output || "No output");
     } catch (err) {
       console.error(err);
@@ -59,6 +68,7 @@ const [language, setLanguage] = useState(LANGUAGES[0].value);
       setLoading(false);
     }
   };
+
 
   const currentMonacoLang =
     LANGUAGES.find((lang) => lang.value === language)?.monaco || "plaintext";
